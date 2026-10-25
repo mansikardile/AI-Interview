@@ -1,6 +1,6 @@
 # 005: Integrated A/B/C interview journey
 
-Status: integration verification in progress. Authorized scope: merge the pushed A/B/C branches, reconcile shared behavior, verify, then merge/push main.
+Status: verified and pushed to integration/main on October 25, 2026. Authorized scope: merge the pushed A/B/C branches, reconcile shared behavior, verify, then merge/push main. See `docs/STATUS.md` for commit identities and verification limitations.
 
 ## Requirements
 

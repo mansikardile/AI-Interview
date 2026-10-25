@@ -1,6 +1,6 @@
 # Integrated delivery status
 
-Updated October 25, 2026. A/B/C are combined on `codex/integration-interview-flow`; verification is in progress before merging main.
+Updated October 25, 2026. A/B/C were combined and pushed on `codex/integration-interview-flow` (`ba7a555`), then merged and pushed to `main` (`b2bb792`). All three original branch tips are ancestors of main; no teammate branch was rewritten or deleted. The separate `kajal` platform branch was not part of the requested A/B/C integration and remains untouched.
 
 | Area                    | Included                                                                                                       | Remaining checks/work                                                    |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |

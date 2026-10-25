@@ -2,6 +2,8 @@
 
 ## A/B/C integration (2026-10-25)
 
+Published integration commit `ba7a555`; main merge `b2bb792`. Verified original A/B/C tips are ancestors of main and no secrets were staged. The separately pushed `kajal` branch was left untouched as outside this merge scope.
+
 - Final `npm run check`: 89 tests across 14 files pass, plus lint and TypeScript. Integration includes all three role tracks, JD/history/results, native speech lifecycle and task-specific Ollama output schemas. Production build passes with existing third-party MediaPipe/ONNX dynamic-import warnings.
 
 - Merged A (`7a92c69`), B (`ecc2e38`) and C (`4a257a0`) with histories retained on `codex/integration-interview-flow`. Flow decisions: `INTEGRATED-FLOW.md` and `specs/005-integration/`.
