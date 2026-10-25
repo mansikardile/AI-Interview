@@ -46,8 +46,7 @@ export function describeApiFailure(error: unknown): {
 } {
   if (error && typeof error === "object" && "code" in error) {
     const code = String((error as { code: string }).code);
-    const message =
-      error instanceof Error ? error.message : "The request failed.";
+    const message = error instanceof Error ? error.message : "The request failed.";
     const retryable =
       "retryable" in error ? Boolean((error as { retryable: boolean }).retryable) : true;
     switch (code) {

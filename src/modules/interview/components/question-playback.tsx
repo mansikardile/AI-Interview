@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+
+const subscribe = () => () => {};
 
 /**
  * Spoken question playback (A06).
@@ -11,15 +13,21 @@ export function QuestionPlayback({
   text,
   questionId,
   onPlayingChange,
+  disabled = false,
 }: {
   text: string;
   questionId: string;
   onPlayingChange?: (playing: boolean) => void;
+  disabled?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [unsupported, setUnsupported] = useState(false);
+  const supported = useSyncExternalStore(
+    subscribe,
+    () => "speechSynthesis" in window,
+    () => true,
+  );
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
 
   function stopAll() {
@@ -32,18 +40,15 @@ export function QuestionPlayback({
   }
 
   useEffect(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setUnsupported(true);
-      return;
-    }
-    stopAll();
-    return () => stopAll();
-    // Reset when the active question changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questionId]);
+    return () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      utterance.current = null;
+      onPlayingChange?.(false);
+    };
+  }, [questionId, onPlayingChange]);
 
   function play() {
-    if (unsupported || typeof window === "undefined") return;
+    if (disabled || !supported || typeof window === "undefined") return;
     if (paused && utterance.current) {
       window.speechSynthesis.resume();
       setPaused(false);
@@ -55,12 +60,14 @@ export function QuestionPlayback({
     const next = new SpeechSynthesisUtterance(text);
     next.volume = muted ? 0 : 1;
     next.onend = () => {
+      if (utterance.current !== next) return;
       setPlaying(false);
       setPaused(false);
       utterance.current = null;
       onPlayingChange?.(false);
     };
     next.onerror = () => {
+      if (utterance.current !== next) return;
       setPlaying(false);
       setPaused(false);
       utterance.current = null;
@@ -88,26 +95,33 @@ export function QuestionPlayback({
     if (utterance.current) utterance.current.volume = next ? 0 : 1;
   }
 
-  if (unsupported) {
+  if (!supported) {
     return (
-      <p className="small muted">Spoken questions are not supported in this browser. Read the text.</p>
+      <p className="small muted">
+        Spoken questions are not supported in this browser. Read the text.
+      </p>
     );
   }
 
   return (
     <div className="row voice-controls" aria-label="Spoken question controls">
-      <button type="button" className="button secondary" onClick={playing && !paused ? pause : play}>
+      <button
+        type="button"
+        className="button secondary"
+        onClick={playing && !paused ? pause : play}
+        disabled={disabled}
+      >
         {playing && !paused ? "Pause question" : paused ? "Resume question" : "Play question"}
-      </button>
-      <button type="button" className="button secondary" onClick={stopAll} disabled={!playing && !paused}>
-        Stop
       </button>
       <button
         type="button"
         className="button secondary"
-        onClick={toggleMute}
-        aria-pressed={muted}
+        onClick={stopAll}
+        disabled={!playing && !paused}
       >
+        Stop
+      </button>
+      <button type="button" className="button secondary" onClick={toggleMute} aria-pressed={muted}>
         {muted ? "Unmute" : "Mute"}
       </button>
       {playing && (

@@ -69,6 +69,7 @@ export function buildAssessAnswerPrompt(context: InterviewContext, answer: Submi
 Evaluate the candidate's answer for the active question for a ${difficulty}-level ${role} role (${difficultyDepth}). Generate constructive feedback plus a changed-constraint follow-up question.
 
 INSTRUCTIONS:
+The response has exactly TWO top-level keys: "feedback" and "nextQuestion". Do not put nextQuestion inside feedback. Close the feedback object before writing nextQuestion.
 1. Score correctness, reasoning, and clarity on a 0-5 scale using the scoring rubric.
 2. 'evidenceQuote' MUST BE a verbatim substring from the current answer (between 10 and 300 characters). It must exist word-for-word in the candidate's answer text.
 3. 'strengths': 1 to 5 specific, grounded observations of what the candidate did well.

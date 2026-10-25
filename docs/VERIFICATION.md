@@ -1,5 +1,15 @@
 # Initialization verification
 
+## A/B/C integration (2026-10-25)
+
+- Final `npm run check`: 89 tests across 14 files pass, plus lint and TypeScript. Integration includes all three role tracks, JD/history/results, native speech lifecycle and task-specific Ollama output schemas. Production build passes with existing third-party MediaPipe/ONNX dynamic-import warnings.
+
+- Merged A (`7a92c69`), B (`ecc2e38`) and C (`4a257a0`) with histories retained on `codex/integration-interview-flow`. Flow decisions: `INTEGRATED-FLOW.md` and `specs/005-integration/`.
+- Production HTTP integration smoke passes a JD and three question/answer rounds, identical-request retries, premature-report rejection, completed results with original JD/questions and foreign-owner rejection. Existing interview and monitoring HTTP smokes also pass in labeled mock mode.
+- Browser skill verifies JD-first setup, explicit consent and required-device lock without physical device access. Completed all three fixture rounds with B's distinct follow-ups and quoted feedback. Physical speech/device acceptance is not implied.
+- Actual local `gemma4:e2b-mlx` passes the merged question → assessment/exact quotation/follow-up → monitoring review smoke. Initial B prompt output nested nextQuestion inside feedback and was rejected. Task-specific schema output and explicit top-level instruction resolved that observed case; invalid future output still fails with draft preserved. No model-quality guarantee or hosted Jarvis test is claimed.
+- Fixed TTS integration to use `playbackActive` without stopping required streams; browser dictation appends to existing text, requires transcript review before submit and has stale-callback/disposal tests. Web Speech has separate browser-managed capture and vendor disclosure; actual audio remains manual acceptance.
+
 ## Team C update (2026-10-25)
 
 Latest permission/Ollama revision:

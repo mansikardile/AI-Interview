@@ -218,6 +218,8 @@ export class SessionService {
     return reportSchema.parse({
       sessionId: id,
       role: session.config.role,
+      config: session.config,
+      questions: session.questions,
       mode: session.mode,
       completedAt: session.completedAt,
       averageScores: {

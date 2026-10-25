@@ -12,6 +12,7 @@ export class OllamaIntelligence extends JarvisIntelligence {
       model: options.model,
       fetcher: ollamaFetcher,
       timeoutMs: 120000,
+      structuredOutput: true,
     });
   }
 }

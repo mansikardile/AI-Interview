@@ -14,17 +14,30 @@ export function VoiceAnswerControls({
   disabled,
   onTranscriptText,
   createSpeechCapture = createWebSpeechCapture,
+  onDictationStart,
+  onBusyChange,
 }: {
   disabled?: boolean;
   /** Merges recognition text into the editable answer draft. */
   onTranscriptText: (text: string, final: boolean) => void;
   createSpeechCapture?: CreateSpeechCapture;
+  onDictationStart?: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [state, setState] = useState<SpeechCaptureState>("idle");
   const [error, setError] = useState("");
   const controller = useRef<SpeechCaptureController | null>(null);
   const transcriptRef = useRef(onTranscriptText);
-  transcriptRef.current = onTranscriptText;
+  useEffect(() => {
+    transcriptRef.current = onTranscriptText;
+  }, [onTranscriptText]);
+  useEffect(() => {
+    if (disabled && (state === "listening" || state === "requesting"))
+      void controller.current?.stop();
+  }, [disabled, state]);
+  useEffect(() => {
+    onBusyChange?.(state === "listening" || state === "requesting" || state === "processing");
+  }, [state, onBusyChange]);
 
   useEffect(() => {
     const capture = createSpeechCapture({
@@ -45,6 +58,7 @@ export function VoiceAnswerControls({
       await controller.current?.stop();
       return;
     }
+    onDictationStart?.();
     await controller.current?.start();
   }
 

@@ -48,6 +48,21 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
           New interview →
         </Link>
       </div>
+      {report.config && (
+        <section className="panel stack">
+          <h2>Interview context</h2>
+          <p>
+            {report.config.role} · {report.config.difficulty} · {report.answers.length} completed
+            answers
+          </p>
+          <details>
+            <summary>Original job description</summary>
+            <p style={{ whiteSpace: "pre-wrap" }}>
+              {report.config.jobDescription || "No job description supplied by the API client."}
+            </p>
+          </details>
+        </section>
+      )}
       {report.mode === "mock" && (
         <p className="notice">
           Demo report: feedback and scores are fixed placeholders for development. They do not
@@ -55,7 +70,6 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
         </p>
       )}
       <PendingObservations sessionId={sessionId} />
-      <GemmaReview sessionId={sessionId} />
       <div className="score-grid">
         {Object.entries(report.averageScores).map(([key, value]) => (
           <section className="panel" key={key}>
@@ -75,6 +89,10 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
           {report.answers.map((answer, index) => (
             <section className="panel stack" key={answer.submissionId}>
               <h2>Answer {index + 1}</h2>
+              <h3>
+                {report.questions?.find((question) => question.id === answer.questionId)?.text ||
+                  "Interview question"}
+              </h3>
               <p className="muted">{answer.text}</p>
               <blockquote>“{answer.feedback.evidenceQuote}”</blockquote>
               <div>
@@ -85,6 +103,9 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
                   ))}
                 </ul>
               </div>
+              <p>
+                <strong>Next practice:</strong> {answer.feedback.nextPractice}
+              </p>
               <div>
                 <h3>What to develop</h3>
                 <ul>
@@ -126,6 +147,7 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
           </section>
         </aside>
       </div>
+      <GemmaReview sessionId={sessionId} />
     </main>
   );
 }

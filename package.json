@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:integration:smoke": "node --import=tsx scripts/integration-smoke.ts",
     "test:ollama": "node --env-file-if-exists=.env.local --import=tsx scripts/ollama-smoke.ts",
     "postinstall": "node scripts/prepare-monitoring-assets.mjs",
     "prepare:monitoring": "node scripts/prepare-monitoring-assets.mjs",

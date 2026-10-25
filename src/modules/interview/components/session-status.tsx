@@ -9,7 +9,9 @@ export function SessionLoadingPanel({ phase }: { phase: "loading" | "reconnectin
     <main className="container">
       <section className="panel stack" aria-busy="true" aria-live="polite">
         <p className="eyebrow">{phase === "reconnecting" ? "Reconnecting" : "Loading"}</p>
-        <h1>{phase === "reconnecting" ? "Restoring your interview…" : "Opening your interview…"}</h1>
+        <h1>
+          {phase === "reconnecting" ? "Restoring your interview…" : "Opening your interview…"}
+        </h1>
         <div className="skeleton-stack" aria-hidden="true">
           <div className="skeleton line wide" />
           <div className="skeleton line" />

@@ -15,7 +15,7 @@ OLLAMA_MODEL=gemma4:e2b-mlx
 
 Use your installed Gemma 4 tag (`ollama list`); this machine already has the tag above. Start `ollama serve`, then `npm run dev` or `npm run test:ollama`. No model download is automatic. The smoke test uses synthetic content and actual inference. `.env.local` is gitignored; `.env.example` retains mock defaults for teammates.
 
-The app uses Ollama's [native Chat API](https://docs.ollama.com/api/chat) with `stream:false`, `think:false`, JSON output and a 120-second timeout. Monitoring reviews additionally request the actual JSON schema. The internal response adapter reuses the same validation/quote checks as JarvisLabs. Local HTTP is restricted to loopback hosts; redirects are rejected and no cloud authorization header is forwarded. Do not expose Ollama publicly.
+The app uses Ollama's [native Chat API](https://docs.ollama.com/api/chat) with `stream:false`, `think:false`, task-specific JSON schemas and a 120-second timeout. Questions, assessments and monitoring reviews all request their actual output schema; monitoring IDs are constrained to supplied evidence. The response adapter reuses Jarvis validation/quote checks. Local HTTP is loopback-only, redirects are rejected, and cloud authorization is never forwarded. Do not expose Ollama publicly.
 
 Both interview generation and monitoring reviews use Ollama when `AI_PROVIDER=ollama`. Reviews label the provider `ollama`, never `jarvislabs`. The browser does not call Ollama directly. Invalid JSON or invented IDs still fail explicitly.
 

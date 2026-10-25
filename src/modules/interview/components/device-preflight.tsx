@@ -17,7 +17,7 @@ function speechRecognitionAvailable(): boolean {
   if (typeof window === "undefined") return false;
   return Boolean(
     (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition ||
-      (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition,
+    (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition,
   );
 }
 
@@ -33,8 +33,12 @@ async function queryPermission(name: PermissionName): Promise<DeviceCapability |
   }
 }
 
-async function probeDevices(consent: MonitoringConsent): Promise<Omit<DevicePreflightState, "checking">> {
-  const speechRecognition: DeviceCapability = speechRecognitionAvailable() ? "ready" : "unsupported";
+async function probeDevices(
+  consent: MonitoringConsent,
+): Promise<Omit<DevicePreflightState, "checking">> {
+  const speechRecognition: DeviceCapability = speechRecognitionAvailable()
+    ? "ready"
+    : "unsupported";
   const speechSynthesis: DeviceCapability =
     typeof window !== "undefined" && "speechSynthesis" in window ? "ready" : "unsupported";
 
@@ -129,7 +133,10 @@ export function DevicePreflight({
       <h2 id="preflight-heading">Before you answer</h2>
       <p className="muted small">
         Capability check only — no camera or microphone stream is opened here.
-        {monitoringOff ? " Monitoring is off for this session." : ""} {required ? "Saved interviews require both live devices in the monitoring panel; capability is not a permission grant." : "Typed fixture answers work without devices."}
+        {monitoringOff ? " Monitoring is off for this session." : ""}{" "}
+        {required
+          ? "Saved interviews require both live devices in the monitoring panel; capability is not a permission grant."
+          : "Typed fixture answers work without devices."}
       </p>
       <ul className="status-list">
         <li>
@@ -155,7 +162,9 @@ export function DevicePreflight({
       </ul>
       {(state.microphone === "denied" || state.camera === "denied") && (
         <p className="notice" role="status">
-          {required ? "Permission denied — allow both devices in browser site settings, then retry in the device panel or exit the interview." : "Permission denied — continue with typed fixture answers."}
+          {required
+            ? "Permission denied — allow both devices in browser site settings, then retry in the device panel or exit the interview."
+            : "Permission denied — continue with typed fixture answers."}
         </p>
       )}
     </section>

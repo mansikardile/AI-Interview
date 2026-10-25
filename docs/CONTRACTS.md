@@ -82,6 +82,8 @@ Events are client-reported observations and are not trusted proof of behavior. D
 
 ## Reports
 
+Integrated reports add optional `config: InterviewConfig` and `questions: Question[]`, populated by the current server. Older payloads remain accepted. Results show original JD/level and map each answer's `questionId` back to question text. Browser dictation may use vendor-managed capture, with explicit disclosure; TTS uses C's `playbackActive` rather than disabling required monitoring.
+
 Available after completion only (409 otherwise). Contains role, mode, completion time, average rubric scores, individual answers/feedback, deduplicated practice suggestions, and a distinct `observations` section. Monitoring is absent from the score calculation and from B's model prompt. Mock reports label scores as placeholders.
 
 ## Module interfaces

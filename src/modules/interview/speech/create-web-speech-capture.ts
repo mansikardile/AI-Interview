@@ -13,10 +13,12 @@ type SpeechRecognitionLike = {
   onstart: ((ev: Event) => void) | null;
   onend: ((ev: Event) => void) | null;
   onerror: ((ev: { error: string }) => void) | null;
-  onresult: ((ev: {
-    resultIndex: number;
-    results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
-  }) => void) | null;
+  onresult:
+    | ((ev: {
+        resultIndex: number;
+        results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
+      }) => void)
+    | null;
   start(): void;
   stop(): void;
   abort(): void;
@@ -67,19 +69,24 @@ export function createWebSpeechCapture(options: SpeechCaptureOptions): SpeechCap
       intentionalStop = false;
       finalBuffer = "";
       setState("requesting");
+      const previous = recognition;
+      recognition = null;
       try {
-        recognition?.abort();
+        previous?.abort();
       } catch {
         /* ignore */
       }
       recognition = new Ctor();
+      const active = recognition;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = "en-US";
 
-      recognition.onstart = () => setState("listening");
+      recognition.onstart = () => {
+        if (recognition === active) setState("listening");
+      };
       recognition.onerror = (ev) => {
-        if (disposed) return;
+        if (disposed || recognition !== active) return;
         if (ev.error === "aborted" || ev.error === "no-speech") return;
         if (ev.error === "not-allowed") {
           setState("unavailable");
@@ -90,7 +97,7 @@ export function createWebSpeechCapture(options: SpeechCaptureOptions): SpeechCap
         setState("idle");
       };
       recognition.onresult = (ev) => {
-        if (disposed) return;
+        if (disposed || recognition !== active) return;
         let interim = "";
         for (let i = ev.resultIndex; i < ev.results.length; i += 1) {
           const piece = ev.results[i]![0]!.transcript;
@@ -114,7 +121,7 @@ export function createWebSpeechCapture(options: SpeechCaptureOptions): SpeechCap
         }
       };
       recognition.onend = () => {
-        if (disposed) return;
+        if (disposed || recognition !== active) return;
         if (!intentionalStop) {
           // Browser ended early — surface idle so UI can restart.
           setState("idle");
@@ -140,6 +147,11 @@ export function createWebSpeechCapture(options: SpeechCaptureOptions): SpeechCap
     },
 
     async stop() {
+      if (disposed) return;
+      if (!recognition) {
+        setState("idle");
+        return;
+      }
       intentionalStop = true;
       setState("processing");
       try {

@@ -4,6 +4,8 @@ An open-source mock interview starter for a four-person hackathon team. The inte
 
 ## Start here
 
+The A/B/C journey is documented in [Integrated flow](docs/INTEGRATED-FLOW.md): JD → role/level/count → consent → required devices → questions/follow-ups → final results. The combined app includes draft restoration, editable browser dictation, spoken questions, B's rubric and C's local monitoring/Gemma reviews.
+
 ```bash
 nvm install
 nvm use

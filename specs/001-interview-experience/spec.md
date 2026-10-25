@@ -10,7 +10,7 @@ A candidate can configure a mock interview, answer questions, receive adaptive f
 
 - UX-009: Saved interview UI requires explicit camera/audio consent and working camera/microphone before revealing questions or accepting answers. Browser denial, revocation, stop or disconnection blocks progression while preserving drafts. Users may exit or retry; no permission bypass. Fixture and diagnostic routes remain device-optional for independent development. The server cannot attest hardware permission from client consent flags.
 
-- UX-001: Configure role (backend/frontend/SRE), difficulty, job description, question count (1–5), required camera/audio consent for saved interviews, and optional focus consent. Résumé upload is deferred; do not imply it is available.
+- UX-001: Saved setup first requires a nonempty job description, role (backend/frontend/SRE), difficulty and question count (1–5), then required camera/audio consent and optional focus consent. Context can be edited before creating the session. Résumé upload is deferred; do not imply it is available.
 - UX-002: Show the current question and a text answer field. Disable duplicate button presses while pending; keep a stable submission ID across retries.
 - UX-003: Display provider/storage mode, progress, errors, and answer-grounded feedback. Preserve the drafted answer when a request fails.
 - UX-004: Submit the current question ID and answer UUID through the shared API. Navigate to the report only after completion.

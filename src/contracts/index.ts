@@ -132,6 +132,8 @@ export const sessionSchema = z
 export const reportSchema = z.object({
   sessionId: idSchema,
   role: createSessionSchema.shape.role,
+  config: createSessionSchema.optional(),
+  questions: z.array(questionSchema).optional(),
   mode: z.enum(["mock", "live"]),
   completedAt: z.string().datetime(),
   averageScores: feedbackSchema.shape.scores,

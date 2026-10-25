@@ -8,6 +8,7 @@ import {
   type SubmitAnswerInput,
 } from "@/contracts";
 import { DomainError } from "@/lib/domain-error";
+import { z } from "zod";
 import {
   SYSTEM_COACH_PROMPT,
   buildAssessAnswerPrompt,
@@ -21,6 +22,7 @@ type JarvisOptions = {
   model: string;
   fetcher?: typeof fetch;
   timeoutMs?: number;
+  structuredOutput?: boolean;
 };
 
 /**
@@ -118,7 +120,11 @@ export class JarvisIntelligence implements InterviewIntelligence {
 
   constructor(private readonly options: JarvisOptions) {}
 
-  private async request(systemPromptAddendum: string, data: unknown): Promise<unknown> {
+  private async request(
+    systemPromptAddendum: string,
+    data: unknown,
+    schema: z.ZodType,
+  ): Promise<unknown> {
     try {
       const response = await (this.options.fetcher ?? fetch)(
         `${this.options.baseUrl.replace(/\/$/, "")}/chat/completions`,
@@ -133,6 +139,14 @@ export class JarvisIntelligence implements InterviewIntelligence {
             model: this.options.model,
             temperature: 0.2,
             max_tokens: 1800,
+            ...(this.options.structuredOutput
+              ? {
+                  response_format: {
+                    type: "json_schema",
+                    json_schema: { name: "interview_response", schema: z.toJSONSchema(schema) },
+                  },
+                }
+              : {}),
             messages: [
               {
                 role: "system",
@@ -189,7 +203,7 @@ export class JarvisIntelligence implements InterviewIntelligence {
 
   async initialQuestion(config: InterviewConfig): Promise<Question> {
     const { task, data } = buildInitialQuestionPrompt(config);
-    const value = await this.request(task, data);
+    const value = await this.request(task, data, questionSchema.pick({ text: true, topic: true }));
     const candidate = typeof value === "object" && value !== null ? value : {};
 
     const result = questionSchema.safeParse({
@@ -212,7 +226,16 @@ export class JarvisIntelligence implements InterviewIntelligence {
 
   async assessAnswer(context: InterviewContext, answer: SubmitAnswerInput): Promise<Assessment> {
     const { task, data } = buildAssessAnswerPrompt(context, answer);
-    const value = await this.request(task, data);
+    const value = await this.request(
+      task,
+      data,
+      z
+        .object({
+          feedback: assessmentSchema.shape.feedback,
+          nextQuestion: questionSchema.pick({ text: true, topic: true }),
+        })
+        .strict(),
+    );
 
     const raw = value as {
       feedback?: unknown;
