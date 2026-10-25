@@ -1,4 +1,5 @@
 import {
+  deleteSessionResponseSchema,
   reportSchema,
   sessionSchema,
   type InterviewConfig,
@@ -17,9 +18,29 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, schema: z.ZodType<T>, body?: unknown): Promise<T> {
+type RequestOptions = {
+  method?: string;
+  body?: unknown;
+};
+
+async function request<T>(
+  url: string,
+  schema: z.ZodType<T>,
+  optionsOrBody?: RequestOptions | unknown,
+): Promise<T> {
+  const isOptions =
+    optionsOrBody !== null &&
+    typeof optionsOrBody === "object" &&
+    ("method" in optionsOrBody || "body" in optionsOrBody);
+  const method = isOptions
+    ? (optionsOrBody as RequestOptions).method ?? "GET"
+    : optionsOrBody === undefined
+      ? "GET"
+      : "POST";
+  const body = isOptions ? (optionsOrBody as RequestOptions).body : optionsOrBody;
+
   const response = await fetch(url, {
-    method: body === undefined ? "GET" : "POST",
+    method,
     credentials: "same-origin",
     cache: "no-store",
     ...(body === undefined
@@ -49,4 +70,13 @@ export const api = {
     ),
   getReport: (id: string) =>
     request(`/api/sessions/${encodeURIComponent(id)}/report`, reportSchema),
+  deleteSession: (id: string) =>
+    request(`/api/sessions/${encodeURIComponent(id)}`, deleteSessionResponseSchema, {
+      method: "DELETE",
+    }),
+  createRetryRound: (id: string) =>
+    request(`/api/sessions/${encodeURIComponent(id)}/retry`, sessionSchema, {
+      method: "POST",
+    }),
 };
+
