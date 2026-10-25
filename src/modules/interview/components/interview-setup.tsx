@@ -52,8 +52,12 @@ export function InterviewSetup() {
           know what to practice next.
         </p>
         <div className="row">
-          <span className="badge">AI: {mode.ai}</span>
-          <span className="badge">Storage: {mode.storage}</span>
+          <span className="badge">
+            AI: {mode.ai === "loading" ? "checking…" : mode.ai}
+          </span>
+          <span className="badge">
+            Storage: {mode.storage === "loading" ? "checking…" : mode.storage}
+          </span>
           <span className="badge">Candidate-controlled practice</span>
         </div>
       </div>
@@ -144,8 +148,8 @@ export function InterviewSetup() {
             {pending ? "Preparing your question…" : "Start practice →"}
           </button>
           <p className="small muted">
-            Typed answers work now. Voice, camera detection, and diagram interviews are assigned
-            development tasks.
+            Typed answers always work. Voice dictate and spoken questions are available in the room
+            when the browser supports them; camera detection remains owner C.
           </p>
         </form>
         <aside className="stack">

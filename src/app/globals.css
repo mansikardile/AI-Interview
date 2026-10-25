@@ -325,6 +325,62 @@ ul:not([class]) {
   color: #7a879a;
   font-size: 12px;
 }
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 4px;
+}
+.skeleton {
+  background: linear-gradient(90deg, #e8eef8 0%, #f5f8fc 50%, #e8eef8 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+}
+.skeleton.line {
+  height: 14px;
+  width: 70%;
+}
+.skeleton.line.wide {
+  width: 92%;
+}
+.skeleton.block {
+  height: 120px;
+  width: 100%;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+.reconnect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: #eef5ff;
+  border: 1px solid #c9daf7;
+  border-radius: 10px;
+  color: #2f4f86;
+  font-size: 14px;
+}
+.preflight h2 {
+  margin-bottom: 8px;
+}
+.stack-tight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.voice-controls .badge {
+  text-transform: none;
+}
 @media (max-width: 760px) {
   .two-column {
     grid-template-columns: 1fr;
