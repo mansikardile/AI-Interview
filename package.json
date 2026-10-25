@@ -11,7 +11,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ai": "vitest run tests/intelligence.test.ts",
+    "test:ai": "vitest run tests/intelligence.test.ts tests/intelligence-evaluation.test.ts",
     "check": "npm run lint && npm run typecheck && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
