@@ -28,4 +28,13 @@ export class PostgresSessionRepository implements SessionRepository {
     );
     return result.rowCount === 1;
   }
+
+  async deleteOwned(id: string, ownerHash: string) {
+    const result = await this.pool.query(
+      "DELETE FROM interview_sessions WHERE id=$1 AND owner_hash=$2",
+      [id, ownerHash],
+    );
+    return (result.rowCount ?? 0) > 0;
+  }
 }
+

@@ -154,6 +154,10 @@ export const errorResponseSchema = z.object({
   }),
 });
 
+export const deleteSessionResponseSchema = z.object({
+  deleted: z.boolean(),
+});
+
 export type InterviewConfig = z.infer<typeof createSessionSchema>;
 export type Question = z.infer<typeof questionSchema>;
 export type Feedback = z.infer<typeof feedbackSchema>;
@@ -163,6 +167,8 @@ export type MonitoringConsent = z.infer<typeof monitoringConsentSchema>;
 export type MonitoringEvent = z.infer<typeof monitoringEventSchema>;
 export type InterviewSession = z.infer<typeof sessionSchema>;
 export type InterviewReport = z.infer<typeof reportSchema>;
+export type DeleteSessionResponse = z.infer<typeof deleteSessionResponseSchema>;
 
 // Intelligence receives only interview evidence, never monitoring observations.
 export type InterviewContext = Pick<InterviewSession, "config" | "questions" | "answers">;
+

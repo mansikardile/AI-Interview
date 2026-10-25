@@ -1,4 +1,5 @@
 import {
+  deleteSessionResponseSchema,
   reportSchema,
   sessionSchema,
   type InterviewConfig,
@@ -64,4 +65,12 @@ export const api = {
     ),
   getReport: (id: string) =>
     request(`/api/sessions/${encodeURIComponent(id)}/report`, reportSchema),
+  deleteSession: (id: string) =>
+    request(`/api/sessions/${encodeURIComponent(id)}`, deleteSessionResponseSchema, undefined, {
+      method: "DELETE",
+    }),
+  createRetryRound: (id: string) =>
+    request(`/api/sessions/${encodeURIComponent(id)}/retry`, sessionSchema, undefined, {
+      method: "POST",
+    }),
 };

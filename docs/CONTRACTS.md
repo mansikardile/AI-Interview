@@ -19,6 +19,8 @@ Dates are UTC ISO strings, IDs are UUIDs, `durationMs` is a nonnegative integer,
 | GET    | `/health`                  | none                                  | selected modes and scaffold integration status | D                        |
 | POST   | `/sessions`                | `InterviewConfig` (defaults accepted) | `InterviewSession`, HTTP 201                   | D, consumed by A         |
 | GET    | `/sessions/:id`            | owner cookie                          | `InterviewSession`                             | D/A                      |
+| DELETE | `/sessions/:id`            | owner cookie                          | `{ deleted: true }`                            | D                        |
+| POST   | `/sessions/:id/retry`      | owner cookie, completed session       | targeted retry `InterviewSession`, HTTP 201    | D                        |
 | POST   | `/sessions/:id/answers`    | `SubmitAnswerInput`                   | updated `InterviewSession`                     | D, invokes B             |
 | POST   | `/sessions/:id/events`     | `{ events: MonitoringEvent[] }`       | `{ accepted: true, revision }`                 | D, consumed by A/C       |
 | PATCH  | `/sessions/:id/monitoring` | `{ monitoring: MonitoringConsent }`   | updated `InterviewSession`                     | C integration into D API |
