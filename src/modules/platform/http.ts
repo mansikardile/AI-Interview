@@ -23,10 +23,14 @@ export async function ownerHash(create = false) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export async function parseJson<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
+export function assertOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin)
     throw new DomainError("ORIGIN_REJECTED", "Cross-origin requests are not allowed.", 403);
+}
+
+export async function parseJson<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
+  assertOrigin(request);
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     throw new DomainError("INVALID_CONTENT_TYPE", "Send an application/json request.", 415);
   const raw = await request.text();

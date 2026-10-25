@@ -9,6 +9,7 @@ export interface SessionRepository {
     ownerHash: string,
     expectedRevision: number,
   ): Promise<boolean>;
+  deleteOwned(id: string, ownerHash: string): Promise<boolean>;
 }
 
 export class MemorySessionRepository implements SessionRepository {
@@ -32,4 +33,11 @@ export class MemorySessionRepository implements SessionRepository {
     this.records.set(session.id, { ownerHash, session: structuredClone(session) });
     return true;
   }
+
+  async deleteOwned(id: string, ownerHash: string) {
+    const record = this.records.get(id);
+    if (!record || record.ownerHash !== ownerHash) return false;
+    return this.records.delete(id);
+  }
 }
+

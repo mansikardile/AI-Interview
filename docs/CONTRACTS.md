@@ -19,6 +19,8 @@ Dates are UTC ISO strings, IDs are UUIDs, `durationMs` is a nonnegative integer,
 | GET    | `/health`                  | none                                  | selected modes and scaffold integration status | D                        |
 | POST   | `/sessions`                | `InterviewConfig` (defaults accepted) | `InterviewSession`, HTTP 201                   | D, consumed by A         |
 | GET    | `/sessions/:id`            | owner cookie                          | `InterviewSession`                             | D/A                      |
+| DELETE | `/sessions/:id`            | owner cookie                          | `{ deleted: true }`                            | D                        |
+| POST   | `/sessions/:id/retry`      | owner cookie, completed session       | targeted retry `InterviewSession`, HTTP 201    | D                        |
 | POST   | `/sessions/:id/answers`    | `SubmitAnswerInput`                   | updated `InterviewSession`                     | D, invokes B             |
 | POST   | `/sessions/:id/events`     | `{ events: MonitoringEvent[] }`       | `{ accepted: true, revision }`                 | D, consumed by A/C       |
 | PATCH  | `/sessions/:id/monitoring` | `{ monitoring: MonitoringConsent }`   | updated `InterviewSession`                     | C integration into D API |
@@ -37,6 +39,8 @@ Dates are UTC ISO strings, IDs are UUIDs, `durationMs` is a nonnegative integer,
 ```
 
 Roles: `backend | frontend | sre`. Difficulty: `junior | mid | senior`. Question count: 1–5 including follow-ups; this is not a timed session. Job description: up to 8000 characters. All monitoring defaults off. Setup supports all three sources; camera/audio additionally require explicit start controls and browser permission.
+
+Optional `practiceFocus` is bounded to 2000 characters and sent as untrusted model context. Targeted retry rounds preserve the original JD/role/level, add focus derived from prior practice suggestions, cap questions at 3 and reset all consent to false. They are separate sessions; deleting one does not delete the other. Repeating a retry-creation POST creates another round; creation is not an idempotent job.
 
 Returned session includes: `contractVersion`, `id`, `createdAt`, `completedAt`, `revision`, `status`, `mode`, `storage`, `config`, `questions`, `activeQuestionId`, `answers`, `events`. Status is `in_progress | completed`; `mode` is `mock | live`; storage is `memory | postgres`.
 
@@ -110,4 +114,4 @@ The A/C speech port is typed in `src/contracts/media.ts`: `SpeechCaptureControll
 | `PROVIDER_UNAVAILABLE`, `INVALID_MODEL_OUTPUT`                             | 502  | Keep answer and submission ID; retry                           |
 | `CONFIGURATION_ERROR`                                                      | 503  | Fix server env and restart                                     |
 
-Contract v1 has no file upload, streaming audio, SSE, authentication, deletion, pagination, timed interview, pause/cancel or incident-lab endpoint. Specify these before implementing them across modules.
+Contract v1 now includes owner-scoped deletion and targeted retry creation. The browser clears this session's app-owned draft/pending metadata in the current tab after successful deletion, not downloaded exports, provider-held records, other sessions or other tabs. Both new routes return origin errors through the normal JSON envelope. File upload, streaming audio, SSE, full authentication, pagination, timed interview, pause/cancel and incident labs remain deferred.

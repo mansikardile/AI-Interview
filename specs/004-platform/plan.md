@@ -1,5 +1,7 @@
 # Implementation plan: owner D
 
+Integrated results retain original JD and Q/A context alongside export/print/retry/delete actions. HTTP request helpers preserve explicit methods and AbortSignal for C's queue. New mutation routes check origin inside `respond`. Retry configuration keeps JD unchanged with optional `practiceFocus` (2000 chars), resets monitoring consent and starts a distinct <=3-question session. Both model prompt envelopes receive the focus. Confirmed deletion removes an owner-scoped repository record and only its browser-tab app keys; external copies and independent rounds are not deleted. Preserve mock labels in printed output.
+
 Route handlers parse shared Zod inputs and call `SessionService`. A server-only runtime selects memory/PostgreSQL repository and mock/Jarvis intelligence. Owner cookies are random opaque values; only hashes are persisted. Mutation Origin/content-type checks are centralized.
 
 Repository contract: `create`, `getOwned`, `compareAndSwap`. A session aggregate stores config, questions, answers, observations, status and revision; owner metadata remains repository-internal. PostgreSQL uses an indexed owner column and JSONB document, updating with a revision predicate. Use migrations before enabling it. Memory is process-local and only for development.

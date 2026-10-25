@@ -411,3 +411,41 @@ ul:not([class]) {
     font-size: 30px;
   }
 }
+
+.danger {
+  background: #dc2626;
+  border-color: #b91c1c;
+  color: white;
+}
+.danger:hover {
+  background: #b91c1c;
+}
+.secondary.danger-text {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+.secondary.danger-text:hover {
+  background: #fef2f2;
+}
+
+@media print {
+  .site-header,
+  .site-footer,
+  .no-print,
+  button {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: #111 !important;
+  }
+  .container {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .panel {
+    border: 1px solid #ddd !important;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+}

@@ -17,15 +17,18 @@ ${RUBRIC_PROMPT_GUIDANCE}
 
 export function buildInitialQuestionPrompt(config: InterviewConfig) {
   const roleGuidance = {
-    backend: "API reliability, idempotency, distributed systems, database transactions, concurrency, or caching.",
-    frontend: "Asynchronous UI, state management, render performance, race conditions, caching, or accessibility.",
+    backend:
+      "API reliability, idempotency, distributed systems, database transactions, concurrency, or caching.",
+    frontend:
+      "Asynchronous UI, state management, render performance, race conditions, caching, or accessibility.",
     sre: "Incident response, observability, canary rollouts, failure domains, capacity planning, or disaster recovery.",
   }[config.role];
 
   const difficultyGuidance = {
     junior: "Focus on foundational primitives, clean error handling, and basic mechanics.",
     mid: "Focus on edge cases, concurrency, failure modes, and practical trade-off analysis.",
-    senior: "Focus on complex distributed failure modes, scalability bottlenecks, blast radius, and architectural trade-offs.",
+    senior:
+      "Focus on complex distributed failure modes, scalability bottlenecks, blast radius, and architectural trade-offs.",
   }[config.difficulty];
 
   const task = `
@@ -44,6 +47,7 @@ Return JSON with exact shape:
     role: config.role,
     difficulty: config.difficulty,
     jobDescription: config.jobDescription,
+    practiceFocus: config.practiceFocus,
   };
 
   return { task, data };
@@ -54,15 +58,18 @@ export function buildAssessAnswerPrompt(context: InterviewContext, answer: Submi
   const difficulty = context.config.difficulty;
 
   const constraintChangeGuidance = {
-    backend: "Change constraints around: concurrent duplicate requests, downstream payment/service timeout, network partition, database connection starvation, or partial state commit.",
-    frontend: "Change constraints around: rapid consecutive user input, slow 3G network out-of-order resolution, component unmounting during fetch, or memory leak from lingering listeners.",
+    backend:
+      "Change constraints around: concurrent duplicate requests, downstream payment/service timeout, network partition, database connection starvation, or partial state commit.",
+    frontend:
+      "Change constraints around: rapid consecutive user input, slow 3G network out-of-order resolution, component unmounting during fetch, or memory leak from lingering listeners.",
     sre: "Change constraints around: rollback blocked by backward-incompatible DB migration, cascading alert storm, health check flap, or split-brain service discovery.",
   }[role];
 
   const difficultyDepth = {
     junior: "Evaluate with focus on foundational mechanics and clean error handling.",
     mid: "Evaluate with focus on edge cases, concurrency, and practical trade-off depth.",
-    senior: "Evaluate with focus on distributed systems resilience, blast radius, and architectural trade-offs.",
+    senior:
+      "Evaluate with focus on distributed systems resilience, blast radius, and architectural trade-offs.",
   }[difficulty];
 
   const task = `
@@ -103,6 +110,7 @@ Return JSON with exact shape:
       role: context.config.role,
       difficulty: context.config.difficulty,
       jobDescription: context.config.jobDescription,
+      practiceFocus: context.config.practiceFocus,
     },
     questions: context.questions,
     previousAnswers: context.answers.map(({ text, questionId }) => ({ text, questionId })),

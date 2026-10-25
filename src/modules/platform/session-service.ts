@@ -237,4 +237,47 @@ export class SessionService {
       practicePlan: [...new Set(session.answers.map((answer) => answer.feedback.nextPractice))],
     });
   }
+
+  async delete(ownerHash: string, id: string): Promise<{ deleted: boolean }> {
+    const deleted = await this.repository.deleteOwned(id, ownerHash);
+    if (!deleted) {
+      throw new DomainError(
+        "NOT_FOUND",
+        "This interview was not found in this browser. Memory sessions also disappear when the server restarts.",
+        404,
+      );
+    }
+    return { deleted: true };
+  }
+
+  async createRetryRound(ownerHash: string, id: string): Promise<InterviewSession> {
+    const session = await this.get(ownerHash, id);
+    if (session.status !== "completed" || !session.completedAt) {
+      throw new DomainError(
+        "REPORT_NOT_READY",
+        "Only completed interviews can generate a targeted retry round.",
+        409,
+      );
+    }
+
+    const practiceTopics = [...new Set(session.answers.map((a) => a.feedback.nextPractice))];
+    const practiceFocus =
+      practiceTopics.length > 0
+        ? `Targeted practice focus on previous development areas: ${practiceTopics.slice(0, 3).join("; ")}`.slice(
+            0,
+            2000,
+          )
+        : undefined;
+
+    const retryConfig: InterviewConfig = {
+      role: session.config.role,
+      difficulty: session.config.difficulty,
+      jobDescription: session.config.jobDescription,
+      practiceFocus,
+      questionCount: Math.min(Math.max(session.config.questionCount, 1), 3),
+      monitoring: { focus: false, camera: false, audio: false },
+    };
+
+    return this.create(ownerHash, retryConfig);
+  }
 }

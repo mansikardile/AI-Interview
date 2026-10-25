@@ -144,4 +144,32 @@ describe("session contract and state", () => {
       code: "REPORT_NOT_READY",
     });
   });
+  it("deletes an owned session and rejects deletion by a different owner", async () => {
+    const session = await service.create(owner, config());
+    await expect(service.delete("different-owner", session.id)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+    const result = await service.delete(owner, session.id);
+    expect(result.deleted).toBe(true);
+    await expect(service.get(owner, session.id)).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+  it("creates a targeted retry round from a completed session", async () => {
+    const session = await service.create(owner, config({ questionCount: 1 }));
+    await expect(service.createRetryRound(owner, session.id)).rejects.toMatchObject({
+      code: "REPORT_NOT_READY",
+    });
+    await service.answer(owner, session.id, input(session.activeQuestionId!));
+    const retrySession = await service.createRetryRound(owner, session.id);
+    expect(retrySession.id).not.toBe(session.id);
+    expect(retrySession.config.role).toBe(session.config.role);
+    expect(retrySession.status).toBe("in_progress");
+    expect(retrySession.config.jobDescription).toBe(session.config.jobDescription);
+    expect(retrySession.config.practiceFocus).toContain("Targeted practice focus");
+    expect(retrySession.config.monitoring).toEqual({ focus: false, camera: false, audio: false });
+    expect(retrySession.answers).toHaveLength(0);
+    expect(retrySession.events).toHaveLength(0);
+    expect(retrySession.questions.length).toBeGreaterThan(0);
+  });
 });

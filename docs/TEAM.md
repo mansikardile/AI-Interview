@@ -7,7 +7,7 @@ Names can replace A–D without changing the boundaries. Each person works in th
 | A     | Interview experience · `codex/interview-experience` | `src/modules/interview/**`, `src/app/page.tsx`, `src/app/interview/**`                                                                  | `InterviewExperience` and the HTTP client in `src/lib/api-client.ts` |
 | B     | AI interviewer · `codex/intelligence`               | `src/modules/intelligence/**`, `specs/002-intelligence/**`                                                                              | `InterviewIntelligence`, `getIntelligence()`                         |
 | C     | Monitoring and media · `codex/monitoring`           | `src/modules/monitoring/**`, `specs/003-monitoring/**`                                                                                  | `MonitoringPanel`, event callback matching `MonitoringEvent`         |
-| D     | Platform and reports · `codex/platform`             | `src/modules/platform/**`, `src/modules/reports/**`, `src/app/api/**`, `src/app/reports/**`, `src/workers/**`, `scripts/**`, `infra/**` | API routes, repository, reports, optional integration adapters       |
+| D (Kajal) | Platform and reports · `codex/platform` / `kajal`   | `src/modules/platform/**`, `src/modules/reports/**`, `src/app/api/**`, `src/app/reports/**`, `src/workers/**`, `scripts/**`, `infra/**` | API routes, repository, reports, optional integration adapters       |
 
 A also owns `specs/001-interview-experience/**`. D owns `specs/004-platform/**`.
 
