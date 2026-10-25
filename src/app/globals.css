@@ -432,8 +432,7 @@ ul:not([class]) {
   .site-header,
   .site-footer,
   .no-print,
-  button,
-  .notice {
+  button {
     display: none !important;
   }
   body {
@@ -450,4 +449,3 @@ ul:not([class]) {
     box-shadow: none !important;
   }
 }
-

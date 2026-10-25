@@ -261,20 +261,23 @@ export class SessionService {
     }
 
     const practiceTopics = [...new Set(session.answers.map((a) => a.feedback.nextPractice))];
-    const weaknessPrompt =
+    const practiceFocus =
       practiceTopics.length > 0
-        ? `Targeted practice focus on previous development areas: ${practiceTopics.slice(0, 3).join("; ")}`
-        : session.config.jobDescription;
+        ? `Targeted practice focus on previous development areas: ${practiceTopics.slice(0, 3).join("; ")}`.slice(
+            0,
+            2000,
+          )
+        : undefined;
 
     const retryConfig: InterviewConfig = {
       role: session.config.role,
       difficulty: session.config.difficulty,
-      jobDescription: weaknessPrompt.slice(0, 8000),
+      jobDescription: session.config.jobDescription,
+      practiceFocus,
       questionCount: Math.min(Math.max(session.config.questionCount, 1), 3),
-      monitoring: session.config.monitoring,
+      monitoring: { focus: false, camera: false, audio: false },
     };
 
     return this.create(ownerHash, retryConfig);
   }
 }
-

@@ -9,10 +9,15 @@ export async function GET(_request: Request, context: { params: Promise<{ sessio
   );
 }
 
-export async function DELETE(request: Request, context: { params: Promise<{ sessionId: string }> }) {
-  assertOrigin(request);
-  return respond(async () =>
-    getRuntime().service.delete(await ownerHash(), idSchema.parse((await context.params).sessionId)),
-  );
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ sessionId: string }> },
+) {
+  return respond(async () => {
+    assertOrigin(request);
+    return getRuntime().service.delete(
+      await ownerHash(),
+      idSchema.parse((await context.params).sessionId),
+    );
+  });
 }
-

@@ -1,5 +1,9 @@
 # Initialization verification
 
+## D / kajal results integration (2026-10-25)
+
+Merged `origin/kajal` (`e6da9fb`) into the already integrated A/B/C main on `codex/integration-platform-results`. Preserved C's cancellable event API and monitoring reviews, original report JD/questions and B's prompt context. Added targeted practice focus without replacing JD, fresh consent on retry, owner/origin error handling and scoped browser cleanup after deletion. Lint, TypeScript, 93 tests, `npm run build` and `npm run test:smoke` (against `next start`) pass. A browser run on the production build confirmed report → targeted round (JD kept, consent reset, devices re-required) and confirmed deletion (owned session 404, retry round retained, only that session's tab keys cleared, redirect home). Physical speech/camera, native print/PDF appearance, hosted Jarvis and actual PostgreSQL deletion remain manual/unverified.
+
 ## A/B/C integration (2026-10-25)
 
 Published integration commit `ba7a555`; main merge `b2bb792`. Verified original A/B/C tips are ancestors of main and no secrets were staged. The separately pushed `kajal` branch was left untouched as outside this merge scope.

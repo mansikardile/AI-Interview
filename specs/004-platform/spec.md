@@ -8,6 +8,8 @@ The other three modules integrate through a predictable, private session API and
 
 ## Requirements
 
+- PLAT-011: Reports support deliberate JSON export and print/PDF, a confirmed owner-scoped DELETE, and a new targeted round from completed results. Retrying preserves the original JD/role/level and stores bounded practice focus separately; new consent starts off. All mutation origin checks use the standard error envelope. Deleting clears only this session's draft/pending metadata in the current tab; it does not erase downloaded exports, provider records, other rounds or other browser tabs. Mock labels remain visible in print.
+
 - PLAT-001: Implement version-1 shared schemas and endpoints in `docs/CONTRACTS.md`; reject invalid data consistently.
 - PLAT-002: Scope every session lookup/mutation/report to an opaque anonymous browser owner cookie. Unknown/unowned IDs return 404; do not return stored owner hashes.
 - PLAT-003: Support session creation, retrieval, answer submission, monitoring batches and completed-session report retrieval. Bound question count and input sizes.

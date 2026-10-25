@@ -15,6 +15,7 @@ export const createSessionSchema = z
     role: z.enum(["backend", "frontend", "sre"]).default("backend"),
     difficulty: z.enum(["junior", "mid", "senior"]).default("mid"),
     jobDescription: z.string().trim().max(8000).default(""),
+    practiceFocus: z.string().trim().max(2000).optional(),
     questionCount: z.number().int().min(1).max(5).default(3),
     monitoring: monitoringConsentSchema.default({ focus: false, camera: false, audio: false }),
   })
@@ -171,4 +172,3 @@ export type DeleteSessionResponse = z.infer<typeof deleteSessionResponseSchema>;
 
 // Intelligence receives only interview evidence, never monitoring observations.
 export type InterviewContext = Pick<InterviewSession, "config" | "questions" | "answers">;
-

@@ -165,7 +165,11 @@ describe("session contract and state", () => {
     expect(retrySession.id).not.toBe(session.id);
     expect(retrySession.config.role).toBe(session.config.role);
     expect(retrySession.status).toBe("in_progress");
+    expect(retrySession.config.jobDescription).toBe(session.config.jobDescription);
+    expect(retrySession.config.practiceFocus).toContain("Targeted practice focus");
+    expect(retrySession.config.monitoring).toEqual({ focus: false, camera: false, audio: false });
+    expect(retrySession.answers).toHaveLength(0);
+    expect(retrySession.events).toHaveLength(0);
     expect(retrySession.questions.length).toBeGreaterThan(0);
   });
 });
-

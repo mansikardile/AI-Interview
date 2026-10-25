@@ -94,7 +94,7 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
           </p>
           {!localDataCleared && (
             <p role="alert">
-              Browser storage could not be cleared. Remove this app's site data to clear local
+              Browser storage could not be cleared. Remove this app’s site data to clear local
               drafts and pending metadata.
             </p>
           )}

@@ -6,7 +6,10 @@ async function main() {
   const created = await fetch(`${base}/api/sessions`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ questionCount: 1 }),
+    body: JSON.stringify({
+      questionCount: 1,
+      jobDescription: "Synthetic backend role: build reliable payment APIs.",
+    }),
   });
   assert.equal(created.status, 201);
   const cookie = created.headers
@@ -43,6 +46,19 @@ async function main() {
   assert.equal((await report.json()).data.observations.count, 0);
 
   // Test targeted practice retry round creation
+  for (const [path, method] of [
+    ["", "DELETE"],
+    ["/retry", "POST"],
+  ]) {
+    const foreign = await fetch(`${base}/api/sessions/${session.id}${path}`, { method, headers });
+    assert.equal(foreign.status, 404, "Owner is required for report actions");
+    const cross = await fetch(`${base}/api/sessions/${session.id}${path}`, {
+      method,
+      headers: { ...ownerHeaders, Origin: "https://example.invalid" },
+    });
+    assert.equal(cross.status, 403);
+    assert.equal((await cross.json()).error.code, "ORIGIN_REJECTED");
+  }
   const retryRound = await fetch(`${base}/api/sessions/${session.id}/retry`, {
     method: "POST",
     headers: ownerHeaders,
@@ -51,6 +67,9 @@ async function main() {
   const { data: retrySession } = await retryRound.json();
   assert.ok(retrySession.id && retrySession.id !== session.id, "Retry session has unique ID");
   assert.equal(retrySession.status, "in_progress", "Retry session is in progress");
+  assert.equal(retrySession.config.jobDescription, session.config.jobDescription);
+  assert.ok(retrySession.config.practiceFocus.length > 0);
+  assert.deepEqual(retrySession.config.monitoring, { focus: false, camera: false, audio: false });
 
   // Test session deletion
   const deleted = await fetch(`${base}/api/sessions/${session.id}`, {
@@ -65,6 +84,25 @@ async function main() {
     headers: ownerHeaders,
   });
   assert.equal(afterDelete.status, 404, "Deleted session returns 404");
+  assert.equal(
+    (await fetch(`${base}/api/sessions/${session.id}/report`, { headers: ownerHeaders })).status,
+    404,
+  );
+  assert.equal(
+    (await fetch(`${base}/api/sessions/${retrySession.id}`, { headers: ownerHeaders })).status,
+    200,
+    "Retry round is independent",
+  );
+  assert.equal(
+    (
+      await fetch(`${base}/api/sessions/${retrySession.id}`, {
+        method: "DELETE",
+        headers: ownerHeaders,
+      })
+    ).status,
+    200,
+    "Clean up synthetic retry round",
+  );
 
   const crossOrigin = await fetch(`${base}/api/sessions`, {
     method: "POST",
