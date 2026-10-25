@@ -60,8 +60,12 @@ export function InterviewSetup() {
           know what to practice next.
         </p>
         <div className="row">
-          <span className="badge">AI: {mode.ai}</span>
-          <span className="badge">Storage: {mode.storage}</span>
+          <span className="badge">
+            AI: {mode.ai === "loading" ? "checking…" : mode.ai}
+          </span>
+          <span className="badge">
+            Storage: {mode.storage === "loading" ? "checking…" : mode.storage}
+          </span>
           <span className="badge">Candidate-controlled practice</span>
         </div>
       </div>
@@ -143,7 +147,7 @@ export function InterviewSetup() {
           </button>
           <p className="small muted">
             Camera and microphone access are required for saved interviews. Typed answers are
-            available. Voice transcription and diagram interviewing remain separate features.
+            available. Browser-supported dictation produces editable text, and questions can be read aloud. Diagram interviewing remains deferred.
           </p>
         </form>
         <aside className="stack">

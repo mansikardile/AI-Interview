@@ -86,7 +86,7 @@ Available after completion only (409 otherwise). Contains role, mode, completion
 
 ## Module interfaces
 
-The planned A/C speech port is typed in `src/contracts/media.ts`: `SpeechCaptureController` exposes `start`, `stop`, and `dispose`; callbacks receive state, transcript updates and errors. C owns stream acquisition, A owns transcript editing and submission. This is an interface only; no transcription implementation is included.
+The A/C speech port is typed in `src/contracts/media.ts`: `SpeechCaptureController` exposes `start`, `stop`, and `dispose`; callbacks receive state, transcript updates and errors. C owns stream acquisition; A owns transcript editing, submission, and question TTS. Owner A ships a default browser Web Speech adapter (`createWebSpeechCapture`) behind that interface, with on-device/vendor disclosure in the UI. `InterviewExperience` accepts an optional `createSpeechCapture` factory so C can replace acquisition without rewriting the room. Text fallback remains mandatory.
 
 - **A** exports `InterviewSetup` and `InterviewExperience({sessionId, fixture?})`. The browser calls `api` from `src/lib/api-client.ts`.
 - **B** exports `InterviewIntelligence` with `mode`, `initialQuestion(config)`, and `assessAnswer(context, answer)`. Context contains config, questions and previous answers only. `MockIntelligence`, `JarvisIntelligence`, and `validateAssessment` are public. Platform runtime selects the provider with `getIntelligence()`.
