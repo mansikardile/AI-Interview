@@ -2,6 +2,7 @@ import "server-only";
 import { Pool } from "pg";
 import {
   JarvisIntelligence,
+  OllamaIntelligence,
   MockIntelligence,
   type InterviewIntelligence,
 } from "@/modules/intelligence";
@@ -20,21 +21,43 @@ const globalRuntime = globalThis as typeof globalThis & { interviewIqRuntime?: R
 export function getIntelligence(): InterviewIntelligence {
   const provider = process.env.AI_PROVIDER ?? "mock";
   if (provider === "mock") return new MockIntelligence();
-  if (provider !== "jarvis" || !process.env.JARVISLABS_API_KEY)
+  if (provider === "ollama") {
+    if (!process.env.OLLAMA_MODEL)
+      throw new DomainError(
+        "CONFIGURATION_ERROR",
+        "Set OLLAMA_MODEL to an installed Gemma 4 model.",
+        503,
+      );
+    return new OllamaIntelligence({
+      baseUrl: process.env.OLLAMA_BASE_URL,
+      model: process.env.OLLAMA_MODEL,
+    });
+  }
+  if (
+    provider !== "jarvis" ||
+    !process.env.JARVISLABS_API_KEY ||
+    !process.env.JARVISLABS_MODEL ||
+    !/gemma[-_ ]?4/i.test(process.env.JARVISLABS_MODEL)
+  )
     throw new DomainError(
       "CONFIGURATION_ERROR",
-      "Configure AI_PROVIDER and the server-side model key, then restart the app.",
+      "Configure AI_PROVIDER=jarvis, the server-side API key and exact Gemma 4 model ID from JarvisLabs, then restart the app.",
       503,
     );
   return new JarvisIntelligence({
     apiKey: process.env.JARVISLABS_API_KEY,
     baseUrl: process.env.JARVISLABS_BASE_URL ?? "https://models.jarvislabs.net/v1",
-    model: process.env.JARVISLABS_MODEL ?? "gemma-4-26b-a4b-it",
+    model: process.env.JARVISLABS_MODEL,
   });
 }
 
 export function getRuntime(): Runtime {
-  if (globalRuntime.interviewIqRuntime) return globalRuntime.interviewIqRuntime;
+  if (globalRuntime.interviewIqRuntime) {
+    // Route bundles/HMR can have different class identities. Only the repository is safe to reuse.
+    const repository = globalRuntime.interviewIqRuntime.repository;
+    const intelligence = getIntelligence();
+    return { repository, intelligence, service: new SessionService(repository, intelligence) };
+  }
   const storage = process.env.SESSION_STORE ?? "memory";
   if (storage !== "memory" && storage !== "postgres")
     throw new DomainError("CONFIGURATION_ERROR", "SESSION_STORE must be memory or postgres.", 503);

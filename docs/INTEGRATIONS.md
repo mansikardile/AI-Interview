@@ -55,9 +55,9 @@ Source: [Temporal TypeScript setup](https://docs.temporal.io/develop/typescript/
 
 ## MediaPipe / audio: owner C with A
 
-`@mediapipe/tasks-vision` is installed, but camera detection is not implemented. C03 must pin compatible model/WASM assets, record provenance, handle loading failures and exercise real devices. Localhost/HTTPS and explicit camera permission are required.
+Local MediaPipe face detection and Silero VAD are implemented. `npm ci` prepares pinned, checksum-verified model/runtime assets under the app's own origin; no CDN is contacted during capture. Localhost/HTTPS, source-specific consent, an explicit start action and browser permission are required. See `specs/003-monitoring/ASSETS.md` for versions, hashes and license notices.
 
-The current monitoring panel only observes page visibility if consented. It does not open a camera or microphone. Audio VAD, transcription and question playback remain tasks. Choose a browser-local/disclosed transcription path and coordinate stream ownership; do not claim VAD identifies speakers.
+`/monitoring` runs model diagnostics on generated inputs without physical devices. Camera/audio are off until started. VAD is speech activity only; transcription and question playback are still A's separate work. Use the stream-sharing and playback-suppression hooks in `docs/TEAM-C-HANDOFF.md`.
 
 ## Nudgebee: optional owner D stretch
 

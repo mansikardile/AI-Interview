@@ -20,6 +20,10 @@ export const createSessionSchema = z
   })
   .strict();
 
+export const updateMonitoringConsentSchema = z
+  .object({ monitoring: monitoringConsentSchema })
+  .strict();
+
 export const questionSchema = z
   .object({
     id: idSchema,
@@ -128,6 +132,8 @@ export const sessionSchema = z
 export const reportSchema = z.object({
   sessionId: idSchema,
   role: createSessionSchema.shape.role,
+  config: createSessionSchema.optional(),
+  questions: z.array(questionSchema).optional(),
   mode: z.enum(["mock", "live"]),
   completedAt: z.string().datetime(),
   averageScores: feedbackSchema.shape.scores,

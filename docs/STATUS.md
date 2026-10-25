@@ -1,16 +1,13 @@
-# Scaffold delivery status
+# Integrated delivery status
 
-Updated: 2026-10-25. Task checkboxes describe scaffold implementation, not completion of every product feature.
+Updated October 25, 2026. A/B/C are combined on `codex/integration-interview-flow`; verification is in progress before merging main.
 
-| Area          | Included now                                                                                           | Assigned next                                                           |
-| ------------- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| Interview UI  | Role/level/JD setup, typed answer loop, sample answers, fixture route, report navigation               | Voice interaction, draft recovery, accessibility/device testing         |
-| Intelligence  | Deterministic labeled mock, text Jarvis adapter, schema/quote validation and provider failure handling | Human-reviewed prompt evaluation and live endpoint verification         |
-| Monitoring    | Consent-gated page visibility, neutral event panel, bounded/deduplicated API                           | Camera detection, VAD, device permission/cleanup, retry queue           |
-| Platform      | Anonymous owner scope, routes, CAS/idempotency, memory and optional PostgreSQL adapters                | Real PostgreSQL persistence checks, deletion/retention/auth/rate limits |
-| Reports       | Per-answer feedback, placeholder/live labels, rubric averages and separate observations                | Targeted retry round and export                                         |
-| Temporal      | Separate connectivity workflow/worker/smoke client                                                     | Run against a server and integrate session lifecycle                    |
-| Nudgebee      | Optional health adapter only                                                                           | One verified isolated incident interview lab                            |
-| Team workflow | Four owner specs/plans/tasks, maintained contracts, CI and contribution guide                          | Add teammate names and split branches after common scaffold commit      |
+| Area                    | Included                                                                                                       | Remaining checks/work                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| A: interview            | JD/role/level setup, required permission gate, editable dictation, TTS, draft restore, reconnect and results   | Physical speech/device and accessibility acceptance; whiteboard deferred |
+| B: intelligence         | Role/level questions, rubric, multi-turn prompts, evidence validation, evaluation fixtures, mock/Jarvis/Ollama | Hosted Jarvis credentials and human review of model quality              |
+| C: monitoring           | Local MediaPipe/Silero, required revocable camera/audio, focus metadata, delivery retries/export, Gemma review | Physical camera/microphone/lighting/acoustics acceptance                 |
+| D: platform             | Owner-scoped APIs, idempotency/CAS, memory and optional PostgreSQL, reports                                    | PostgreSQL verification, authentication/retention/rate limits            |
+| Optional infrastructure | Temporal worker/connectivity example; Nudgebee health client                                                   | Actual service execution and lifecycle integration                       |
 
-No model API key, external account, deployment, database container, Temporal server or Nudgebee deployment is created automatically. Memory mock mode is the working baseline. See the final handoff / `docs/VERIFICATION.md` for the checks actually executed.
+Mock scores remain fixed placeholders. Local Ollama uses installed `gemma4:e2b-mlx`; Jarvis is configured separately and not live-verified. No cloud services or model downloads are created automatically. See `VERIFICATION.md`, `TEAM-C-HANDOFF.md` and `GEMMA-JARVIS.md`.

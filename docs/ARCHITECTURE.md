@@ -8,7 +8,7 @@
 - Default runtime is a labeled local demo: mock intelligence, memory repository, no external credentials.
 - PostgreSQL adapter and migration provide optional durable session storage. The anonymous browser owner cookie scopes all session operations.
 - Temporal runs as a separate Node worker. The initial workflow is a smoke-test foundation; it does not yet orchestrate HTTP session progression.
-- Monitoring is opt-in and runs in the browser. Only event metadata is sent, never camera frames or raw microphone recordings.
+- Camera/audio are required for saved interview UI progression, with explicit consent and revocable browser permission. Fixtures/lab remain optional. Detection runs in the browser; only event metadata leaves it, never frames or raw audio.
 - Nudgebee is an optional server-side adapter for an SRE practice lab. It is not in the critical interview path and has no pretend default deployment.
 
 ## Flow
@@ -44,6 +44,6 @@ Do not advertise crash-safe sessions until PostgreSQL is enabled and the Tempora
 
 ## Audio and vision
 
-Face detection runs separately from interview intelligence. No gaze/emotion/identity analysis. VAD only detects speech activity; a second-speaker claim needs separate diarization plus validation. Text input is always available. The initial scaffold has a media panel and focus observer; camera/VAD/transcription tasks remain assigned to C/A.
+Face detection runs separately from interview intelligence. No gaze/emotion/identity analysis. Browser-local MediaPipe detects faces at four frames/second with quality guards and sustained-condition grace periods; local Silero VAD reports speech/silence, not speaker identity. Text input is always available. Team C implements consent controls, device lifecycle, model preparation, a bounded retry queue and export; transcription remains assigned to A. See `docs/TEAM-C-HANDOFF.md` for actual device-testing limits and public interfaces.
 
 For the model, the initial live adapter sends text via Chat Completions. It validates output and quote evidence. Image/audio support of the hosted endpoint must be checked before adding whiteboard or native audio features.

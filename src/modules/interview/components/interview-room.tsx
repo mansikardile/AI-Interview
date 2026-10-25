@@ -3,18 +3,31 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { InterviewSession, MonitoringEvent, SubmitAnswerInput } from "@/contracts";
+import type {
+  InterviewSession,
+  MonitoringEvent,
+  MonitoringConsent,
+  SubmitAnswerInput,
+} from "@/contracts";
 import { fixtureAnswers, fixtureSession } from "@/fixtures/interview";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 import { MockIntelligence } from "@/modules/intelligence";
-import { MonitoringPanel } from "@/modules/monitoring";
+import { MonitoringPanel, type MonitoringHandle } from "@/modules/monitoring";
+import { clearDraft, describeApiFailure, readDraft, writeDraft } from "../draft-storage";
+import { DevicePreflight } from "./device-preflight";
+import { QuestionPlayback } from "./question-playback";
+import { ReconnectBanner, SessionErrorPanel, SessionLoadingPanel } from "./session-status";
+import { VoiceAnswerControls, type CreateSpeechCapture } from "./voice-answer-controls";
 
 export function InterviewExperience({
   sessionId,
   fixture = false,
+  createSpeechCapture,
 }: {
   sessionId: string;
   fixture?: boolean;
+  /** Optional override so C can inject stream-owned capture later. */
+  createSpeechCapture?: CreateSpeechCapture;
 }) {
   const router = useRouter();
   const [session, setSession] = useState<InterviewSession | null>(
@@ -22,10 +35,58 @@ export function InterviewExperience({
   );
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState("");
-  const [telemetryError, setTelemetryError] = useState("");
+  const [mediaReady, setMediaReady] = useState(false);
+  const monitoringRef = useRef<MonitoringHandle>(null);
+  const [loadPhase, setLoadPhase] = useState<"loading" | "reconnecting" | "ready" | "error">(
+    fixture ? "ready" : "loading",
+  );
+  const [loadFailure, setLoadFailure] = useState<{
+    title: string;
+    message: string;
+    retryable: boolean;
+  } | null>(null);
+  const [submitError, setSubmitError] = useState("");
+  const [submitRetryable, setSubmitRetryable] = useState(false);
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const [speechBusy, setSpeechBusy] = useState(false);
   const submission = useRef<SubmitAnswerInput | null>(null);
   const submitting = useRef(false);
+  const draftQuestionId = useRef<string | null>(null);
+  const dictationBase = useRef("");
+  const adoptSession = useCallback(
+    (value: InterviewSession) => {
+      if (draftQuestionId.current !== value.activeQuestionId) {
+        draftQuestionId.current = value.activeQuestionId;
+        setDraft(value.activeQuestionId ? readDraft(sessionId, value.activeQuestionId) : "");
+        submission.current = null;
+      }
+      setSession(value);
+    },
+    [sessionId],
+  );
+
+  const loadSession = useCallback(
+    async (mode: "loading" | "reconnecting" = "loading") => {
+      if (fixture) return;
+      setLoadPhase(mode);
+      setLoadFailure(null);
+      try {
+        const value = await api.getSession(sessionId);
+        adoptSession(value);
+        setLoadPhase("ready");
+        if (value.status === "completed") router.replace(`/reports/${value.id}`);
+      } catch (error) {
+        const described = describeApiFailure(error);
+        setLoadFailure({
+          title: described.title,
+          message: described.message,
+          retryable: described.retryable,
+        });
+        setLoadPhase("error");
+      }
+    },
+    [fixture, sessionId, router, adoptSession],
+  );
 
   useEffect(() => {
     if (fixture) return;
@@ -34,39 +95,75 @@ export function InterviewExperience({
       .getSession(sessionId)
       .then((value) => {
         if (!mounted) return;
-        setSession(value);
+        adoptSession(value);
+        setLoadPhase("ready");
         if (value.status === "completed") router.replace(`/reports/${value.id}`);
       })
       .catch((error) => {
-        if (mounted)
-          setError(error instanceof Error ? error.message : "Could not load this interview.");
+        if (!mounted) return;
+        setLoadFailure(describeApiFailure(error));
+        setLoadPhase("error");
       });
     return () => {
       mounted = false;
     };
-  }, [sessionId, fixture, router]);
+  }, [fixture, sessionId, router, adoptSession]);
+
+  useEffect(() => {
+    const questionId = session?.activeQuestionId;
+    if (!questionId || draftQuestionId.current !== questionId) return;
+    writeDraft(sessionId, questionId, draft);
+  }, [draft, session?.activeQuestionId, sessionId]);
 
   const onEvents = useCallback(
-    (events: MonitoringEvent[]) => {
+    async (events: MonitoringEvent[], signal?: AbortSignal) => {
+      if (!fixture) await api.addEvents(sessionId, events, signal);
       setSession((current) =>
-        current ? { ...current, events: [...current.events, ...events] } : current,
+        current
+          ? {
+              ...current,
+              events: [
+                ...new Map(
+                  [...current.events, ...events].map((event) => [event.id, event]),
+                ).values(),
+              ],
+            }
+          : current,
       );
-      if (!fixture)
-        void api
-          .addEvents(sessionId, events)
-          .catch(() =>
-            setTelemetryError("An observation could not be saved. You can continue answering."),
-          );
     },
     [sessionId, fixture],
   );
 
+  const onConsentChange = useCallback(
+    async (monitoring: MonitoringConsent) => {
+      if (!fixture) await api.updateMonitoringConsent(sessionId, monitoring);
+      setSession((current) =>
+        current ? { ...current, config: { ...current.config, monitoring } } : current,
+      );
+    },
+    [fixture, sessionId],
+  );
+  const onTranscriptText = useCallback((text: string) => {
+    setDraft([dictationBase.current, text].filter(Boolean).join(" "));
+  }, []);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!session?.activeQuestionId || submitting.current || !draft.trim()) return;
+    if (speechBusy) {
+      setSubmitError("Stop dictation and review your transcript before submitting.");
+      return;
+    }
+    if (!fixture && !monitoringRef.current?.isReady()) {
+      setSubmitError(
+        "Camera and microphone must both be running. Start or retry your devices; your answer is preserved.",
+      );
+      return;
+    }
     submitting.current = true;
     setPending(true);
-    setError("");
+    setSubmitError("");
+    setSubmitRetryable(false);
     const text = draft.trim();
     if (
       submission.current?.text !== text ||
@@ -79,6 +176,9 @@ export function InterviewExperience({
       };
     }
     try {
+      if (session.answers.length + 1 >= session.config.questionCount) {
+        await monitoringRef.current?.finish();
+      }
       let next: InterviewSession;
       if (fixture) {
         const assessment = await new MockIntelligence().assessAnswer(session, submission.current);
@@ -102,41 +202,61 @@ export function InterviewExperience({
           activeQuestionId: complete ? null : assessment.nextQuestion.id,
         };
       } else next = await api.submitAnswer(sessionId, submission.current);
-      setSession(next);
+      clearDraft(sessionId, session.activeQuestionId);
+      adoptSession(next);
       setDraft("");
       submission.current = null;
       if (!fixture && next.status === "completed") router.push(`/reports/${sessionId}`);
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Could not submit. Your answer is preserved; try again.",
-      );
+      monitoringRef.current?.resume();
+      const described = describeApiFailure(error);
+      setSubmitError(described.message);
+      setSubmitRetryable(described.retryable);
+      if (
+        error instanceof ApiError &&
+        (error.code === "STALE_QUESTION" || error.code === "IDEMPOTENCY_CONFLICT")
+      ) {
+        void loadSession("reconnecting");
+      }
     } finally {
       submitting.current = false;
       setPending(false);
     }
   }
 
-  if (!session)
+  if (!fixture && loadPhase === "loading") {
+    return <SessionLoadingPanel phase="loading" />;
+  }
+  if (!fixture && loadPhase === "reconnecting" && !session) {
+    return <SessionLoadingPanel phase="reconnecting" />;
+  }
+  if (!fixture && loadPhase === "error" && loadFailure) {
     return (
-      <main className="container">
-        <section className="panel">
-          <h1>{error ? "Interview unavailable" : "Opening your interview…"}</h1>
-          {error && (
-            <p role="alert" className="error">
-              {error}
-            </p>
-          )}
-          <Link href="/">Back to setup</Link>
-        </section>
-      </main>
+      <SessionErrorPanel
+        title={loadFailure.title}
+        message={loadFailure.message}
+        retryable={loadFailure.retryable}
+        onRetry={loadFailure.retryable ? () => void loadSession("reconnecting") : undefined}
+      />
     );
+  }
+
+  if (!session) {
+    return <SessionLoadingPanel phase="loading" />;
+  }
+
   const question = session.questions.find((item) => item.id === session.activeQuestionId);
   const feedback = session.answers.at(-1)?.feedback;
 
   return (
     <main className="container">
+      {loadPhase === "reconnecting" && session && (
+        <ReconnectBanner
+          message="Reconnecting to refresh session state. Your drafted answer stays in this browser."
+          onRetry={() => void loadSession("reconnecting")}
+          busy={pending}
+        />
+      )}
       <div className="section-heading">
         <div>
           <p className="eyebrow">
@@ -151,6 +271,7 @@ export function InterviewExperience({
           <span className="badge">
             {session.answers.length} / {session.config.questionCount} answered
           </span>
+          {ttsPlaying && <span className="badge">App TTS active</span>}
         </div>
       </div>
       {fixture && (
@@ -161,8 +282,24 @@ export function InterviewExperience({
       )}
       <div className="two-column">
         <div className="stack">
+          <DevicePreflight consent={session.config.monitoring} required={!fixture} />
           <section className="panel stack">
-            {question ? (
+            {question && !fixture && !mediaReady ? (
+              <div className="stack">
+                <h2>Allow camera and microphone to begin</h2>
+                <p>
+                  Both devices are mandatory for this practice session. Enable consent if needed and
+                  click Start camera and Start microphone in the device panel. Your browser controls
+                  permission; we cannot override a denial.
+                </p>
+                <p>
+                  Your draft is preserved if a device stops. Monitoring does not upload recordings.
+                  Optional dictation may use a browser/OS speech service, disclosed before you start
+                  it.
+                </p>
+                <Link href="/">Leave interview</Link>
+              </div>
+            ) : question ? (
               <>
                 <div>
                   <p className="eyebrow">
@@ -173,6 +310,13 @@ export function InterviewExperience({
                   <h2 className="question">{question.text}</h2>
                   <p className="muted">{question.topic}</p>
                 </div>
+                <QuestionPlayback
+                  disabled={pending || speechBusy}
+                  key={question.id}
+                  text={question.text}
+                  questionId={question.id}
+                  onPlayingChange={setTtsPlaying}
+                />
                 <form className="stack" onSubmit={submit}>
                   <label>
                     Your answer
@@ -180,13 +324,25 @@ export function InterviewExperience({
                       rows={8}
                       maxLength={12000}
                       value={draft}
-                      disabled={pending}
+                      disabled={pending || speechBusy}
                       onChange={(event) => setDraft(event.target.value)}
                       placeholder="Explain your approach, a tradeoff, and how you would verify it…"
                     />
                   </label>
+                  <VoiceAnswerControls
+                    disabled={pending || ttsPlaying}
+                    onDictationStart={() => {
+                      dictationBase.current = draft.trim();
+                    }}
+                    onBusyChange={setSpeechBusy}
+                    onTranscriptText={onTranscriptText}
+                    createSpeechCapture={createSpeechCapture}
+                  />
                   <div className="row">
-                    <button className="button" disabled={pending || !draft.trim()}>
+                    <button
+                      className="button"
+                      disabled={pending || speechBusy || !draft.trim() || (!fixture && !mediaReady)}
+                    >
                       {pending ? "Reviewing your answer…" : "Submit answer →"}
                     </button>
                     {session.mode === "mock" && (
@@ -205,10 +361,23 @@ export function InterviewExperience({
                         Use sample answer
                       </button>
                     )}
+                    {submitError && submitRetryable && (
+                      <button
+                        className="button secondary"
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                          const form = document.querySelector("form");
+                          form?.requestSubmit();
+                        }}
+                      >
+                        Retry submit
+                      </button>
+                    )}
                   </div>
                   <p className="small muted">
-                    Voice and editable transcription controls will be implemented by A + C. Text
-                    entry is always available.
+                    Drafts restore after refresh for this question only. Voice transcript is
+                    editable before submit; text fallback always remains.
                   </p>
                 </form>
               </>
@@ -225,9 +394,9 @@ export function InterviewExperience({
                 </Link>
               </>
             )}
-            {error && (
+            {submitError && (
               <p role="alert" className="error">
-                {error}
+                {submitError}
               </p>
             )}
           </section>
@@ -251,16 +420,20 @@ export function InterviewExperience({
         </div>
         <aside className="stack">
           <MonitoringPanel
+            required={!fixture}
+            onReadinessChange={setMediaReady}
+            ref={monitoringRef}
+            sessionId={sessionId}
             consent={session.config.monitoring}
             events={session.events}
             onEvents={onEvents}
-            active={session.status === "in_progress"}
+            onConsentChange={onConsentChange}
+            playbackActive={ttsPlaying}
+            active={
+              session.status === "in_progress" &&
+              !(pending && session.answers.length + 1 >= session.config.questionCount)
+            }
           />
-          {telemetryError && (
-            <p role="status" className="notice">
-              {telemetryError}
-            </p>
-          )}
           <section className="panel">
             <h2>A useful answer has a path</h2>
             <ol className="plain-list">
