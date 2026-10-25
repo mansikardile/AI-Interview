@@ -15,8 +15,8 @@ Use an existing authorized JarvisLabs API key in `.env.local`:
 ```dotenv
 AI_PROVIDER=jarvis
 JARVISLABS_API_KEY=your-server-side-key
-JARVISLABS_BASE_URL=https://models.jarvislabs.net/v1
-JARVISLABS_MODEL=gemma-4-26b-a4b-it
+JARVISLABS_BASE_URL=https://serverlessn.jarvislabs.net/openai/<deployment-id>/v1
+JARVISLABS_MODEL=gemma-4-31b-it
 ```
 
 Verify the exact model ID against your account; the example is configurable, not a promise about account availability. The adapter uses the documented OpenAI-compatible Chat Completions shape with standard fetch, server-side only. It sends config and text answers, not camera frames or monitoring events. Live mode does not silently fall back to mock.

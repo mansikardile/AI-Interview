@@ -26,11 +26,11 @@ Create gitignored `.env.local` from `.env.example`, then set:
 ```dotenv
 AI_PROVIDER=jarvis
 JARVISLABS_API_KEY=your-private-model-api-key
-JARVISLABS_BASE_URL=https://models.jarvislabs.net/v1
-JARVISLABS_MODEL=exact-gemma-4-api-id-from-your-dashboard
+JARVISLABS_BASE_URL=https://serverlessn.jarvislabs.net/openai/<deployment-id>/v1
+JARVISLABS_MODEL=gemma-4-31b-it
 ```
 
-The last value is a placeholder, not a runnable model ID. Jarvis lists Gemma 4 26B A4B IT and Gemma 4 31B publicly, but the public quickstart does not specify their exact API IDs. Copy your account's ID rather than assuming a display name or Hugging Face name works. Never use `NEXT_PUBLIC_` for credentials, commit keys, or paste them into chat. Restart Next.js after changes.
+The team's serverless Gemma 4 31B deployment uses model ID `gemma-4-31b-it`; replace `<deployment-id>` with the ID from the JarvisLabs dashboard (the shared-model endpoint `https://models.jarvislabs.net/v1` also works with its own model ID). The base URL ends at `/v1`; the app appends `/chat/completions`. Never use `NEXT_PUBLIC_` for credentials, commit keys, or paste them into chat. Restart Next.js after changes.
 
 ## Genuine model roles
 
