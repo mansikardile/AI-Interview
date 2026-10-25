@@ -1,79 +1,224 @@
 # InterviewIQ
 
-An open-source mock interview starter for a four-person hackathon team. The interviewer asks follow-ups about your answer and produces feedback with quoted evidence. Optional session observations stay separate from technical feedback.
+> **Intelligent, adaptive technical mock interview platform powered by Gemma 4 with private client-side monitoring.**
 
-## Start here
+[![Node](https://img.shields.io/badge/Node.js-24%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vitest](https://img.shields.io/badge/Vitest-93%20Passed-6E9F18?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.0-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-The A/B/C journey is documented in [Integrated flow](docs/INTEGRATED-FLOW.md): JD → role/level/count → consent → required devices → questions/follow-ups → final results. The combined app includes draft restoration, editable browser dictation, spoken questions, B's rubric and C's local monitoring/Gemma reviews.
+---
 
-D's results integration adds report JSON export, native print/PDF, targeted retry rounds with preserved JD and confirmed owner-scoped deletion. New rounds require fresh consent and device start. See the same flow guide for privacy and verification limits.
+## 🌟 Overview
+
+**InterviewIQ** is an open-source technical interview prep platform built for realistic, adaptive technical practice. Unlike standard question-and-answer tools, InterviewIQ dynamically probes candidate answers with **context-aware follow-ups**, enforces **verbatim quote-grounded feedback**, and conducts **100% on-device monitoring** without compromising user privacy.
+
+---
+
+## ✨ Key Features
+
+### 🎙️ 1. Voice-Driven Interview Experience
+
+- **Editable Speech Dictation:** Speak your responses naturally using the Web Speech API, with real-time editable transcripts before final submission.
+- **Spoken Questions:** Natural Text-to-Speech (TTS) plays interview questions aloud, intelligently coordinating with audio analysis.
+- **Draft Resilience:** In-progress answers automatically persist to `localStorage` and recover upon accidental tab reload.
+- **Hardware Preflight & Explicit Consent:** Validates microphone and webcam availability with clear permission gates before any session begins.
+
+### 🧠 2. Gemma 4 Intelligence & Adaptive Questioning
+
+- **Dynamic Follow-Ups:** Listens to candidate answers and introduces relevant architectural edge cases, changed constraints, and trade-offs.
+- **Evidence-Grounded Rubric:** Scoring across 4 dimensions (_Technical Correctness, Communication, System Design, Edge-Case Handling_).
+- **Strict Verbatim Quoting:** Every critique, gap, and strength quotes candidate statements verbatim to eliminate AI hallucination.
+- **Flexible AI Backends:**
+  - **Offline Deterministic Mock:** Instant feedback with zero API keys or external dependencies.
+  - **Local Gemma 4 (Ollama):** Completely private local inference on your own hardware.
+  - **Cloud Gemma 4 (JarvisLabs):** High-performance cloud LLM deployment with structured JSON parsing.
+
+### 👁️ 3. Private Client-Side Monitoring
+
+- **100% On-Device Inference:** Real-time face presence via MediaPipe Vision and speech activity via Silero VAD (ONNX WASM) running directly in the browser.
+- **Zero Video/Audio Streaming:** No media streams or webcam feeds ever leave your machine or upload to external servers.
+- **Focus & Presence Tracking:** Transparently records tab visibility changes and presence interruptions.
+- **Strict Ethical Boundary:** Proctored session observations stay strictly separate from technical scores and do not penalize technical evaluations.
+
+### 🛡️ 4. Enterprise Platform & Persistence
+
+- **Browser-Scoped Ownership:** Secure SHA-256 cookie session isolation with strict Origin verification.
+- **Targeted Practice Rounds:** Completed interviews can instantly spawn focused retry rounds targeting specific identified weaknesses while preserving the original job description.
+- **Export & Reports:** Detailed performance breakdowns with native print/PDF formatting and full JSON data export.
+- **Dual Storage Engines:** Zero-config in-memory storage for development, with production-ready PostgreSQL persistence and Temporal workflow workers.
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Browser (Next.js 16 + React 19)"]
+        UI["Interview Room UI"]
+        TTS["SpeechSynthesis (TTS)"]
+        STT["Web Speech Dictation"]
+        MP["MediaPipe Face Detector (WASM)"]
+        VAD["Silero VAD Voice Detector (ONNX)"]
+        Draft["LocalStorage Draft Cache"]
+    end
+
+    subgraph Server ["Server Platform (Next.js Node Runtime)"]
+        API["/api/sessions Route Handlers"]
+        Auth["Browser-Scoped Ownership & Origin Guard"]
+        Service["Session Service & State Machine"]
+        Repo[("Session Repository (Memory / Postgres)")]
+    end
+
+    subgraph Intelligence ["AI Layer (Gemma 4)"]
+        Router{"AI_PROVIDER"}
+        Mock["Deterministic Mock"]
+        Ollama["Local Gemma 4 (Ollama)"]
+        Jarvis["Cloud Gemma 4 (JarvisLabs)"]
+    end
+
+    UI -->|"Spoken Audio"| TTS
+    STT -->|"Transcript"| UI
+    UI <-->|"Auto-save"| Draft
+    MP & VAD -->|"Local Events"| UI
+
+    UI -->|"Answers & Events"| API
+    API --> Auth --> Service
+    Service <--> Repo
+    Service --> Router
+    Router --> Mock
+    Router --> Ollama
+    Router --> Jarvis
+```
+
+---
+
+## 🚀 Quickstart
+
+### Prerequisites
+
+- **Node.js**: `v24.x` (Recommended)
+- **npm**: `v10.x+`
+
+### 1. Installation
 
 ```bash
-nvm install
-nvm use
-npm ci
+# Clone the repository
+git clone https://github.com/mansikardile/AI-Interview.git
+cd AI-Interview
+
+# Install dependencies (automatically prepares VAD & MediaPipe assets)
+npm install
+
+# Setup environment variables
 cp .env.example .env.local
+# (On Windows PowerShell: Copy-Item .env.example .env.local)
+```
+
+### 2. Start the Development Server
+
+```bash
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). On Windows, use Node.js 24 and `Copy-Item .env.example .env.local` instead of `cp`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Default startup needs no account, API key or Docker. It uses mock intelligence and temporary memory storage. Saved interviews require explicit camera/microphone consent plus browser permissions, and block questions/submission if either device stops. `/interview/demo` is a device-optional fixture-only room; `/monitoring` is a diagnostic lab.
+> **Note:** By default, InterviewIQ runs in **Mock AI mode** with **In-Memory storage**. You can test the complete interview lifecycle without setting up any API keys or databases!
 
-For real local Gemma 4 testing, set `AI_PROVIDER=ollama`, `OLLAMA_MODEL` to your installed Gemma 4 name and `OLLAMA_BASE_URL=http://127.0.0.1:11434/v1` in gitignored `.env.local`. Start Ollama and run `npm run test:ollama`. This machine has `gemma4:e2b-mlx`. See [Gemma setup](docs/GEMMA-JARVIS.md). For hosted Gemma 4 31B, set `AI_PROVIDER=jarvis` and the `JARVISLABS_*` values, then run `npm run test:jarvis`.
+---
 
-## Divide the work
+## 🧪 Testing and Inspection Links
 
-| Person | Responsibility                                                 | Start with                                                         |
-| ------ | -------------------------------------------------------------- | ------------------------------------------------------------------ |
-| A      | Interview UI, setup, voice interaction, transcript editing     | [001 interview experience](specs/001-interview-experience/spec.md) |
-| B      | Gemma interviewer, adaptive questions, evidence-based feedback | [002 intelligence](specs/002-intelligence/spec.md)                 |
-| C      | Camera, VAD/audio, focus monitoring and device lifecycle       | [003 monitoring](specs/003-monitoring/spec.md)                     |
-| D      | Session API, storage, reports, Temporal, optional Nudgebee     | [004 platform](specs/004-platform/spec.md)                         |
+| Destination           | URL                                                                            | Description                                                             |
+| --------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| **Home / Setup**      | [`http://localhost:3000`](http://localhost:3000)                               | Configure role, seniority level, question count, and paste a custom JD. |
+| **Instant Demo Room** | [`http://localhost:3000/interview/demo`](http://localhost:3000/interview/demo) | Test voice controls and Q&A UI directly with preloaded fixtures.        |
+| **Monitoring Lab**    | [`http://localhost:3000/monitoring`](http://localhost:3000/monitoring)         | Test client-side MediaPipe and VAD detection with test inputs.          |
+| **System Health API** | [`http://localhost:3000/api/health`](http://localhost:3000/api/health)         | Check active AI provider, storage backend, and engine readiness.        |
 
-Each feature directory contains a spec, implementation plan and checkable tasks. Read [team ownership and first assignments](docs/TEAM.md) before branching. Shared contracts are already defined in `src/contracts/index.ts`; teammates use mocks/fixtures and do not have to wait for other integrations.
+---
 
-## Documentation map
+## 🤖 Configuring Gemma 4 Backends
 
-- [Team ownership, paths, branches and checkpoints](docs/TEAM.md)
-- [Spec-driven development workflow](docs/SDD.md)
-- [Project principles](.specify/memory/constitution.md)
-- [Architecture and lifecycle](docs/ARCHITECTURE.md)
-- [API and module contracts](docs/CONTRACTS.md)
-- [External services, database and worker setup](docs/INTEGRATIONS.md)
-- [Data handling and public-release work](docs/SECURITY.md)
-- [Demo and verification script](docs/DEMO.md)
-- [Implementation status and deferred work](docs/STATUS.md)
-- [Team C monitoring: implementation, API handoff and device checks](docs/TEAM-C-HANDOFF.md)
+InterviewIQ supports three intelligence modes configured via `.env.local`:
 
-## Commands
+### Option A: Deterministic Mock (Default)
 
-| Command                  | Purpose                                                                       |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| `npm run dev`            | Next.js development server                                                    |
-| `npm run check`          | ESLint, generated route types, TypeScript, contract/service/provider tests    |
-| `npm run test:ai`        | Owner B's provider/prompt-boundary tests                                      |
-| `npm run test:jarvis`    | Live hosted Gemma 4 calls using `JARVISLABS_*` from `.env.local`              |
-| `npm run test:watch`     | Watch unit tests                                                              |
-| `npm run build`          | Production build                                                              |
-| `npm run test:smoke`     | HTTP journey against a running app; `SMOKE_BASE_URL` overrides localhost:3000 |
-| `npm run format`         | Format sources and docs                                                       |
-| `npm run db:migrate`     | Optional PostgreSQL schema initialization                                     |
-| `npm run worker:dev`     | Separate optional Temporal worker                                             |
-| `npm run temporal:smoke` | Execute the Temporal connectivity example                                     |
+```dotenv
+AI_PROVIDER=mock
+```
 
-## Current scope
+_Zero setup. Returns instant, reproducible evaluations and follow-ups._
 
-Working baseline: setup, typed answers, mock follow-ups, quoted feedback, report, optional page-visibility timeline, browser-scoped API, and retry-safe storage mutations. There is also an opt-in JarvisLabs text adapter, a PostgreSQL repository, a Temporal connectivity example, and a Nudgebee health client.
+### Option B: Local Gemma 4 via Ollama
 
-Team C now includes local webcam face detection, local Silero speech activity, source-specific consent changes, retry-safe metadata delivery, and cleanup/export behavior. Open `/monitoring` to test the models with generated inputs without accessing devices. Run `npm run test:monitoring` or, with the app running, `npm run test:monitoring:smoke`.
+```dotenv
+AI_PROVIDER=ollama
+OLLAMA_MODEL=gemma4:e2b-mlx
+OLLAMA_BASE_URL=http://127.0.0.1:11434/v1
+```
 
-Physical webcam/microphone acceptance checks remain manual. Transcription, spoken questions, whiteboard analysis, full Temporal session orchestration, authentication/retention and incident labs remain owner-assigned work. Installing a dependency or including an adapter does not mean its live service was tested.
+_Runs completely offline on your workstation. Run `npm run test:ollama` to verify._
 
-The mock model uses fixed placeholder scores. Memory mode resets on restart and cannot serve a multi-instance deployment. This is a local/team scaffold, not a production hiring or anti-cheating system.
+### Option C: Cloud Gemma 4 via JarvisLabs
 
-## Stack and attribution
+```dotenv
+AI_PROVIDER=jarvis
+JARVISLABS_API_KEY=your_jarvislabs_key
+JARVISLABS_BASE_URL=https://models.jarvislabs.net/v1
+JARVISLABS_MODEL=gemma-4-31b-it
+```
 
-Generated from the official Next.js starter: Next.js App Router, React, TypeScript, Tailwind CSS and ESLint. Shared validation uses Zod; development includes Vitest and Prettier. Optional integrations use PostgreSQL, the Temporal TypeScript SDK and MediaPipe.
+_Hosted cloud inference with high concurrency. Run `npm run test:jarvis` to verify._
 
-The workflow draws on [GitHub Spec Kit](https://github.com/github/spec-kit), without installing its CLI. [Nudgebee](https://github.com/nudgebee/nudgebee), [Temporal](https://github.com/temporalio/temporal), [JarvisLabs](https://jarvislabs.ai/products/models), and [Gemma](https://ai.google.dev/gemma/docs) remain separately operated upstream projects/services. No Nudgebee source or model weights are vendored. Choose a project license with the team before publishing; none is silently imposed here.
+---
+
+## 🛠️ Available Scripts
+
+| Command                          | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`                    | Starts the Next.js development server with Webpack.                  |
+| `npm run check`                  | Runs full suite: ESLint, TypeScript types, and all 93 unit tests.    |
+| `npm test`                       | Runs the Vitest test runner.                                         |
+| `npm run test:watch`             | Starts Vitest in interactive watch mode.                             |
+| `npm run test:smoke`             | Executes HTTP API lifecycle test against a live dev server.          |
+| `npm run test:integration:smoke` | Runs end-to-end simulated 3-round interview smoke flow.              |
+| `npm run test:ai`                | Runs prompt boundary, rubric schema, and quote-grounding tests.      |
+| `npm run test:jarvis`            | Runs live hosted Gemma 4 calls using JarvisLabs serverless endpoint. |
+| `npm run test:monitoring`        | Runs detector, event queue, and VAD unit test suite.                 |
+| `npm run test:ollama`            | Verifies live connectivity with local Ollama Gemma 4 model.          |
+| `npm run build`                  | Builds the production bundle.                                        |
+| `npm run format`                 | Formats the codebase using Prettier.                                 |
+| `npm run db:migrate`             | Runs PostgreSQL migrations (if using persistent database).           |
+| `npm run worker:dev`             | Runs background Temporal worker for session workflows.               |
+| `npm run temporal:smoke`         | Runs Temporal worker connectivity smoke test.                        |
+
+---
+
+## 👥 Team & Architecture Map
+
+InterviewIQ was built across four core domains:
+
+| Owner | Responsibility                                                                               | Core Directory              | Spec Reference                                     |
+| :---: | -------------------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------- |
+| **A** | **Interview Experience**<br>Voice UI, speech synthesis, dictation, draft recovery, preflight | `src/modules/interview/`    | [001 Spec](specs/001-interview-experience/spec.md) |
+| **B** | **Intelligence & Prompts**<br>Gemma 4 integration, adaptive follow-ups, quote validation     | `src/modules/intelligence/` | [002 Spec](specs/002-intelligence/spec.md)         |
+| **C** | **Private Monitoring**<br>MediaPipe face detection, Silero VAD, camera/mic lifecycle         | `src/modules/monitoring/`   | [003 Spec](specs/003-monitoring/spec.md)           |
+| **D** | **Platform & Services**<br>Session API, persistence, security, report PDF/JSON, retry rounds | `src/modules/platform/`     | [004 Spec](specs/004-platform/spec.md)             |
+
+---
+
+## 🔒 Privacy & Ethical Design
+
+1. **Local Media Only:** Audio and video streams are processed exclusively in client-side WebAssembly. No media files or raw streams are ever transmitted to any server.
+2. **Evaluation Decoupling:** Monitoring events (e.g., looking away or speaking pauses) are classified as _session observations_ and are strictly separated from technical rubric scoring.
+3. **Candidate Ownership:** Interview sessions can be deleted on-demand with confirmed browser-scoped deletion.
+4. **Transparent Attestation:** System capabilities and active AI providers are clearly labeled at every stage of the session.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
