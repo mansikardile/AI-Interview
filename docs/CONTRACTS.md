@@ -4,20 +4,25 @@ Executable source of truth: `src/contracts/index.ts`. Owner D coordinates change
 
 ## HTTP rules
 
+Permission policy update: saved interview UI requires camera/audio consent and live device readiness; fixtures/lab are device-optional. The API retains consent defaults for development clients and cannot prove physical permission from client flags. `MonitoringPanel` adds `required?`, `onReadinessChange?`; the handle adds synchronous `isReady()` for submission guards. Monitoring review `provider` is now `jarvislabs | ollama`; local mode uses `AI_PROVIDER=ollama` and loopback-only transport. See `GEMMA-JARVIS.md`.
+
+Team C adds `POST /api/sessions/:id/monitoring/review` with strict `{ "allowMetadataTransfer": true }`. Requires the owner cookie, reads persisted events, and returns `src/contracts/monitoring-review.ts`. Uses live Jarvis/Gemma independently of mock interview mode; sends metadata only and neither persists reviews nor changes scores. Missing configuration returns 503; provider/output failures return 502. See `GEMMA-JARVIS.md`.
+
 Base path: `/api`. Success: `{ "data": ... }`. Failure: `{ "error": { "code": "...", "message": "...", "retryable": false } }`.
 
 Send JSON mutations with `Content-Type: application/json` and same-origin browser credentials. Server creates an opaque `iq_owner` HttpOnly cookie at session creation. Every session operation checks its stored owner hash; hashes are never returned. Other browsers receive 404. This is anonymous prototype isolation, not full authentication. Do not log cookies.
 
 Dates are UTC ISO strings, IDs are UUIDs, `durationMs` is a nonnegative integer, and rubric scores range from 0 to 5. Error messages do not contain submitted candidate content or credentials. JSON bodies are bounded to 100,000 characters after reading; add upstream byte/stream limits before public deployment.
 
-| Method | Path                    | Input                                 | Success data                                   | Owner              |
-| ------ | ----------------------- | ------------------------------------- | ---------------------------------------------- | ------------------ |
-| GET    | `/health`               | none                                  | selected modes and scaffold integration status | D                  |
-| POST   | `/sessions`             | `InterviewConfig` (defaults accepted) | `InterviewSession`, HTTP 201                   | D, consumed by A   |
-| GET    | `/sessions/:id`         | owner cookie                          | `InterviewSession`                             | D/A                |
-| POST   | `/sessions/:id/answers` | `SubmitAnswerInput`                   | updated `InterviewSession`                     | D, invokes B       |
-| POST   | `/sessions/:id/events`  | `{ events: MonitoringEvent[] }`       | `{ accepted: true, revision }`                 | D, consumed by A/C |
-| GET    | `/sessions/:id/report`  | owner cookie, completed session       | `InterviewReport`                              | D                  |
+| Method | Path                       | Input                                 | Success data                                   | Owner                    |
+| ------ | -------------------------- | ------------------------------------- | ---------------------------------------------- | ------------------------ |
+| GET    | `/health`                  | none                                  | selected modes and scaffold integration status | D                        |
+| POST   | `/sessions`                | `InterviewConfig` (defaults accepted) | `InterviewSession`, HTTP 201                   | D, consumed by A         |
+| GET    | `/sessions/:id`            | owner cookie                          | `InterviewSession`                             | D/A                      |
+| POST   | `/sessions/:id/answers`    | `SubmitAnswerInput`                   | updated `InterviewSession`                     | D, invokes B             |
+| POST   | `/sessions/:id/events`     | `{ events: MonitoringEvent[] }`       | `{ accepted: true, revision }`                 | D, consumed by A/C       |
+| PATCH  | `/sessions/:id/monitoring` | `{ monitoring: MonitoringConsent }`   | updated `InterviewSession`                     | C integration into D API |
+| GET    | `/sessions/:id/report`     | owner cookie, completed session       | `InterviewReport`                              | D                        |
 
 ## Create a session
 
@@ -31,7 +36,7 @@ Dates are UTC ISO strings, IDs are UUIDs, `durationMs` is a nonnegative integer,
 }
 ```
 
-Roles: `backend | frontend | sre`. Difficulty: `junior | mid | senior`. Question count: 1–5 including follow-ups; this is not a timed session. Job description: up to 8000 characters. All monitoring defaults off. The starter UI enables focus consent only; camera/audio controls land with C's implementation.
+Roles: `backend | frontend | sre`. Difficulty: `junior | mid | senior`. Question count: 1–5 including follow-ups; this is not a timed session. Job description: up to 8000 characters. All monitoring defaults off. Setup supports all three sources; camera/audio additionally require explicit start controls and browser permission.
 
 Returned session includes: `contractVersion`, `id`, `createdAt`, `completedAt`, `revision`, `status`, `mode`, `storage`, `config`, `questions`, `activeQuestionId`, `answers`, `events`. Status is `in_progress | completed`; `mode` is `mock | live`; storage is `memory | postgres`.
 
@@ -71,7 +76,7 @@ Client generates `submissionId` once per unchanged submission and keeps it on ne
 | camera | `no_face`, `multiple_faces`, `camera_unavailable`      |
 | audio  | `speech_activity`, `silence`, `microphone_unavailable` |
 
-Batch size: 1–50, session cap: 1000. Optional neutral `detail` is at most 300 characters; no raw audio/image fields are permitted. Source/type must match and its source consent must be true. Duplicate event IDs are ignored. New events after completion are rejected. Consent is fixed at creation in v1; mid-session changes need a new reviewed endpoint.
+Batch size: 1–50, session cap: 1000. Optional neutral `detail` is at most 300 characters; no raw audio/image fields are permitted. Source/type must match and its source consent must be true. Duplicate event IDs are ignored. New events after completion are rejected. The additive consent PATCH endpoint accepts the same source booleans, checks the owner cookie, and rejects completed sessions. Capture stops immediately on local revocation, and newly enabled sources wait for the server acknowledgement.
 
 Events are client-reported observations and are not trusted proof of behavior. Do not turn them into a cheating probability or use them to change technical feedback.
 
@@ -85,7 +90,7 @@ The planned A/C speech port is typed in `src/contracts/media.ts`: `SpeechCapture
 
 - **A** exports `InterviewSetup` and `InterviewExperience({sessionId, fixture?})`. The browser calls `api` from `src/lib/api-client.ts`.
 - **B** exports `InterviewIntelligence` with `mode`, `initialQuestion(config)`, and `assessAnswer(context, answer)`. Context contains config, questions and previous answers only. `MockIntelligence`, `JarvisIntelligence`, and `validateAssessment` are public. Platform runtime selects the provider with `getIntelligence()`.
-- **C** exports `MonitoringPanel({consent, events, onEvents, active})`. It calls `onEvents` with metadata and does not own the HTTP session lifecycle. A submits events.
+- **C** exports `MonitoringPanel({sessionId, consent, events, onEvents, onConsentChange, active, playbackActive?, ref?})`. `onEvents(batch, signal)` must resolve only after saving and reject on failure, allowing the bounded queue to retry with stable IDs. The handle exposes `finish`, `resume`, `getMicrophoneStream` and `setPlaybackActive`. A owns HTTP session progression; C supplies consent fields, local detectors, lifecycle, metadata delivery and pending-export components. Details: `docs/TEAM-C-HANDOFF.md`.
 - **D** exposes server API/runtime/repository services through platform `index.ts` and `InterviewReport` through reports `index.ts`. Browser components never import platform.
 
 ## Important errors

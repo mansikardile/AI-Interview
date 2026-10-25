@@ -20,6 +20,10 @@ export const createSessionSchema = z
   })
   .strict();
 
+export const updateMonitoringConsentSchema = z
+  .object({ monitoring: monitoringConsentSchema })
+  .strict();
+
 export const questionSchema = z
   .object({
     id: idSchema,

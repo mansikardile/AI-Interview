@@ -10,7 +10,13 @@ import {
 import { DomainError } from "@/lib/domain-error";
 import type { InterviewIntelligence } from "./types";
 
-type JarvisOptions = { apiKey: string; baseUrl: string; model: string; fetcher?: typeof fetch };
+type JarvisOptions = {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  fetcher?: typeof fetch;
+  timeoutMs?: number;
+};
 
 export function validateAssessment(value: unknown, answer: string): Assessment {
   const result = assessmentSchema.safeParse(value);
@@ -56,7 +62,7 @@ export class JarvisIntelligence implements InterviewIntelligence {
             Authorization: `Bearer ${this.options.apiKey}`,
             "Content-Type": "application/json",
           },
-          signal: AbortSignal.timeout(25000),
+          signal: AbortSignal.timeout(this.options.timeoutMs ?? 25000),
           body: JSON.stringify({
             model: this.options.model,
             temperature: 0.3,

@@ -3,11 +3,16 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { InterviewSession, MonitoringEvent, SubmitAnswerInput } from "@/contracts";
+import type {
+  InterviewSession,
+  MonitoringEvent,
+  MonitoringConsent,
+  SubmitAnswerInput,
+} from "@/contracts";
 import { fixtureAnswers, fixtureSession } from "@/fixtures/interview";
 import { api } from "@/lib/api-client";
 import { MockIntelligence } from "@/modules/intelligence";
-import { MonitoringPanel } from "@/modules/monitoring";
+import { MonitoringPanel, type MonitoringHandle } from "@/modules/monitoring";
 
 export function InterviewExperience({
   sessionId,
@@ -23,7 +28,8 @@ export function InterviewExperience({
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [telemetryError, setTelemetryError] = useState("");
+  const [mediaReady, setMediaReady] = useState(false);
+  const monitoringRef = useRef<MonitoringHandle>(null);
   const submission = useRef<SubmitAnswerInput | null>(null);
   const submitting = useRef(false);
 
@@ -47,23 +53,43 @@ export function InterviewExperience({
   }, [sessionId, fixture, router]);
 
   const onEvents = useCallback(
-    (events: MonitoringEvent[]) => {
+    async (events: MonitoringEvent[], signal?: AbortSignal) => {
+      if (!fixture) await api.addEvents(sessionId, events, signal);
       setSession((current) =>
-        current ? { ...current, events: [...current.events, ...events] } : current,
+        current
+          ? {
+              ...current,
+              events: [
+                ...new Map(
+                  [...current.events, ...events].map((event) => [event.id, event]),
+                ).values(),
+              ],
+            }
+          : current,
       );
-      if (!fixture)
-        void api
-          .addEvents(sessionId, events)
-          .catch(() =>
-            setTelemetryError("An observation could not be saved. You can continue answering."),
-          );
     },
     [sessionId, fixture],
+  );
+
+  const onConsentChange = useCallback(
+    async (monitoring: MonitoringConsent) => {
+      if (!fixture) await api.updateMonitoringConsent(sessionId, monitoring);
+      setSession((current) =>
+        current ? { ...current, config: { ...current.config, monitoring } } : current,
+      );
+    },
+    [fixture, sessionId],
   );
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!session?.activeQuestionId || submitting.current || !draft.trim()) return;
+    if (!fixture && !monitoringRef.current?.isReady()) {
+      setError(
+        "Camera and microphone must both be running. Start or retry your devices; your answer is preserved.",
+      );
+      return;
+    }
     submitting.current = true;
     setPending(true);
     setError("");
@@ -79,6 +105,9 @@ export function InterviewExperience({
       };
     }
     try {
+      if (session.answers.length + 1 >= session.config.questionCount) {
+        await monitoringRef.current?.finish();
+      }
       let next: InterviewSession;
       if (fixture) {
         const assessment = await new MockIntelligence().assessAnswer(session, submission.current);
@@ -107,6 +136,7 @@ export function InterviewExperience({
       submission.current = null;
       if (!fixture && next.status === "completed") router.push(`/reports/${sessionId}`);
     } catch (error) {
+      monitoringRef.current?.resume();
       setError(
         error instanceof Error
           ? error.message
@@ -162,7 +192,18 @@ export function InterviewExperience({
       <div className="two-column">
         <div className="stack">
           <section className="panel stack">
-            {question ? (
+            {question && !fixture && !mediaReady ? (
+              <div className="stack">
+                <h2>Allow camera and microphone to begin</h2>
+                <p>
+                  Both devices are mandatory for this practice session. Enable consent if needed and
+                  click Start camera and Start microphone in the device panel. Your browser controls
+                  permission; we cannot override a denial.
+                </p>
+                <p>Your draft is preserved if a device stops. No video or audio is uploaded.</p>
+                <Link href="/">Leave interview</Link>
+              </div>
+            ) : question ? (
               <>
                 <div>
                   <p className="eyebrow">
@@ -186,7 +227,10 @@ export function InterviewExperience({
                     />
                   </label>
                   <div className="row">
-                    <button className="button" disabled={pending || !draft.trim()}>
+                    <button
+                      className="button"
+                      disabled={pending || !draft.trim() || (!fixture && !mediaReady)}
+                    >
                       {pending ? "Reviewing your answer…" : "Submit answer →"}
                     </button>
                     {session.mode === "mock" && (
@@ -251,16 +295,19 @@ export function InterviewExperience({
         </div>
         <aside className="stack">
           <MonitoringPanel
+            required={!fixture}
+            onReadinessChange={setMediaReady}
+            ref={monitoringRef}
+            sessionId={sessionId}
             consent={session.config.monitoring}
             events={session.events}
             onEvents={onEvents}
-            active={session.status === "in_progress"}
+            onConsentChange={onConsentChange}
+            active={
+              session.status === "in_progress" &&
+              !(pending && session.answers.length + 1 >= session.config.questionCount)
+            }
           />
-          {telemetryError && (
-            <p role="status" className="notice">
-              {telemetryError}
-            </p>
-          )}
           <section className="panel">
             <h2>A useful answer has a path</h2>
             <ol className="plain-list">

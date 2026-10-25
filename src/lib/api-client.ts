@@ -3,6 +3,7 @@ import {
   sessionSchema,
   type InterviewConfig,
   type MonitoringEvent,
+  type MonitoringConsent,
   type SubmitAnswerInput,
 } from "@/contracts";
 import { z } from "zod";
@@ -17,9 +18,15 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, schema: z.ZodType<T>, body?: unknown): Promise<T> {
+async function request<T>(
+  url: string,
+  schema: z.ZodType<T>,
+  body?: unknown,
+  options?: { method?: string; signal?: AbortSignal },
+): Promise<T> {
   const response = await fetch(url, {
-    method: body === undefined ? "GET" : "POST",
+    method: options?.method ?? (body === undefined ? "GET" : "POST"),
+    signal: options?.signal,
     credentials: "same-origin",
     cache: "no-store",
     ...(body === undefined
@@ -41,11 +48,19 @@ export const api = {
   getSession: (id: string) => request(`/api/sessions/${encodeURIComponent(id)}`, sessionSchema),
   submitAnswer: (id: string, answer: SubmitAnswerInput) =>
     request(`/api/sessions/${encodeURIComponent(id)}/answers`, sessionSchema, answer),
-  addEvents: (id: string, events: MonitoringEvent[]) =>
+  addEvents: (id: string, events: MonitoringEvent[], signal?: AbortSignal) =>
     request(
       `/api/sessions/${encodeURIComponent(id)}/events`,
       z.object({ accepted: z.boolean(), revision: z.number() }),
       { events },
+      { signal },
+    ),
+  updateMonitoringConsent: (id: string, monitoring: MonitoringConsent) =>
+    request(
+      `/api/sessions/${encodeURIComponent(id)}/monitoring`,
+      sessionSchema,
+      { monitoring },
+      { method: "PATCH" },
     ),
   getReport: (id: string) =>
     request(`/api/sessions/${encodeURIComponent(id)}/report`, reportSchema),

@@ -45,3 +45,6 @@ next-env.d.ts
 /.local/
 /test-results/
 /playwright-report/
+
+# Generated from locked npm packages by prepare:monitoring (not third-party CDN requests).
+/public/monitoring/vendor/

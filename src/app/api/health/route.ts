@@ -8,7 +8,7 @@ export async function GET() {
         storage: process.env.SESSION_STORE ?? "memory",
         temporal: "scaffold-only",
         nudgebee: "optional-scaffold",
-        media: "focus-only",
+        media: "local-face-and-speech-activity",
       },
     },
     { headers: { "Cache-Control": "no-store" } },

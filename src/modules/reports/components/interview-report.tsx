@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { InterviewReport as Report } from "@/contracts";
 import { api } from "@/lib/api-client";
+import { PendingObservations, GemmaReview } from "@/modules/monitoring";
 
 export function InterviewReport({ sessionId }: { sessionId: string }) {
   const [report, setReport] = useState<Report | null>(null);
@@ -53,6 +54,8 @@ export function InterviewReport({ sessionId }: { sessionId: string }) {
           measure your interview ability.
         </p>
       )}
+      <PendingObservations sessionId={sessionId} />
+      <GemmaReview sessionId={sessionId} />
       <div className="score-grid">
         {Object.entries(report.averageScores).map(([key, value]) => (
           <section className="panel" key={key}>

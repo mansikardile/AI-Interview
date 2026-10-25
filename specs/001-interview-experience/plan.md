@@ -1,5 +1,7 @@
 # Implementation plan: owner A
 
+Saved interview setup requires unchecked-by-default camera/audio consent. The room subscribes to C's readiness and hides question/answer UI until both devices run; submission also synchronously checks live tracks. Stop/revoke/disconnect preserves the draft and blocks progression. Fixture mode remains optional. Browser permission is never inferred from checkbox consent or enforced by bypassing browser controls.
+
 Use client components under `src/modules/interview/components`. Routes only compose the public module component. Use `src/lib/api-client.ts` for JSON requests and shared Zod inferred types. No database/provider imports in client code.
 
 Server creates the session and initial question. On answer submission, maintain `{submissionId, questionId, text}` until success; a changed text gets a new ID. Render returned state rather than locally inventing authoritative progress. Keep transcript draft independent of the camera lifecycle. Show explicit errors; no auto-advance on failed assessment.

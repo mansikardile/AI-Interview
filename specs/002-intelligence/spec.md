@@ -8,6 +8,8 @@ Interview questions and follow-ups reveal understanding, and feedback gives spec
 
 ## Requirements
 
+- AI-009: `AI_PROVIDER=ollama` uses an explicitly configured local Gemma 4 model for real inference tests, with no Jarvis key or mock fallback. Only loopback HTTP endpoints are permitted for this local transport. Both interview intelligence and monitoring review support it and label the provider accurately. Keep JarvisLabs configuration separate for deployment.
+
 - AI-001: Expose `InterviewIntelligence.initialQuestion(config)` and `.assessAnswer(session, input)` behind one public interface. Provide deterministic mock mode for other owners.
 - AI-002: Live questions follow role, difficulty and job description. Candidate/job-description text is untrusted data, not an instruction source.
 - AI-003: Assessment returns bounded rubric scores (correctness, reasoning, clarity), strengths, gaps, one exact answer quotation, and a next question. Mark mock assessments explicitly.

@@ -1,5 +1,21 @@
 # Initialization verification
 
+## Team C update (2026-10-25)
+
+Latest permission/Ollama revision:
+
+- `npm run check`: 66 tests, lint and TypeScript pass.
+- `npm run test:ollama`: actual installed `gemma4:e2b-mlx` generates a valid question, an assessment with an exact answer quote and a monitoring review with grounded event IDs. Inputs are synthetic. Initial reviews failed validation; a per-request evidence-ID schema and exact-ID template were added. Invalid output still fails rather than being repaired into fabricated evidence. One passing smoke journey does not establish quality/reliability.
+- Browser skill: required unchecked consent blocks setup; after consent and actual Gemma session creation, question/answer UI remains locked with devices off. No physical camera/microphone accessed. Screenshot: `docs/screenshots/required-devices.jpg`.
+- `.env.local` selects Ollama and stays gitignored. Hosted Jarvis inference remains unverified without credentials. Physical permission acceptance and OS indicator checks remain manual.
+
+- `npm run check`: 53 tests, lint and TypeScript pass, including media lifecycle, consent, delivery retries and Gemma/Jarvis provider contracts.
+- Actual local MediaPipe and Silero models ran in the browser against generated visual/silent inputs, including production. No physical camera/microphone access was requested.
+- Production HTTP monitoring smoke passed owner isolation, consent changes, idempotent events, revocation and score separation.
+- Production build succeeds with upstream MediaPipe/ONNX dynamic-dependency warnings. Positive physical-device scenarios and live Jarvis inference remain unverified; see `TEAM-C-HANDOFF.md` and `GEMMA-JARVIS.md`.
+
+## Original starter verification
+
 Verified locally on 2026-10-25 with Node.js 24.10.0 and npm 11.6.1.
 
 - Clean `npm ci` from the lockfile succeeds; installation audit reported zero vulnerabilities. Lint, tests, formatting and production build also pass after the clean install.

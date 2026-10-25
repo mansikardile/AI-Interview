@@ -3,6 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:ollama": "node --env-file-if-exists=.env.local --import=tsx scripts/ollama-smoke.ts",
+    "postinstall": "node scripts/prepare-monitoring-assets.mjs",
+    "prepare:monitoring": "node scripts/prepare-monitoring-assets.mjs",
+    "predev": "npm run prepare:monitoring",
+    "prebuild": "npm run prepare:monitoring",
+    "test:monitoring": "vitest run tests/monitoring",
+    "test:monitoring:smoke": "node --import=tsx scripts/monitoring-smoke.ts",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
@@ -24,11 +31,13 @@
     "node": ">=24 <25"
   },
   "dependencies": {
-    "@mediapipe/tasks-vision": "^1.1.1",
+    "@mediapipe/tasks-vision": "1.1.1",
+    "@ricky0123/vad-web": "0.0.31",
     "@temporalio/client": "^1.24.0",
     "@temporalio/worker": "^1.24.0",
     "@temporalio/workflow": "^1.24.0",
     "next": "16.4.3",
+    "onnxruntime-web": "1.30.0",
     "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",

@@ -10,6 +10,7 @@ import {
   type InterviewReport,
   type InterviewSession,
   type MonitoringEvent,
+  type MonitoringConsent,
   type SubmitAnswerInput,
 } from "@/contracts";
 import { DomainError } from "@/lib/domain-error";
@@ -53,6 +54,26 @@ export class SessionService {
         404,
       );
     return session;
+  }
+
+  async updateMonitoringConsent(ownerHash: string, id: string, monitoring: MonitoringConsent) {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const session = await this.get(ownerHash, id);
+      if (session.status !== "in_progress")
+        throw new DomainError("SESSION_COMPLETED", "This interview has ended.", 409);
+      const next = sessionSchema.parse({
+        ...session,
+        revision: session.revision + 1,
+        config: { ...session.config, monitoring },
+      });
+      if (await this.repository.compareAndSwap(next, ownerHash, session.revision)) return next;
+    }
+    throw new DomainError(
+      "WRITE_CONFLICT",
+      "Consent changed while saving. Please retry.",
+      409,
+      true,
+    );
   }
 
   async answer(ownerHash: string, id: string, input: SubmitAnswerInput): Promise<InterviewSession> {

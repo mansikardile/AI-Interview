@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { InterviewConfig } from "@/contracts";
 import { api } from "@/lib/api-client";
+import { MonitoringConsentFields } from "@/modules/monitoring";
 
 export function InterviewSetup() {
   const router = useRouter();
@@ -29,6 +30,13 @@ export function InterviewSetup() {
     event.preventDefault();
     setPending(true);
     setError("");
+    if (!config.monitoring.camera || !config.monitoring.audio) {
+      setError(
+        "Camera and microphone consent are required. Allow both to continue to browser permissions.",
+      );
+      setPending(false);
+      return;
+    }
     try {
       const session = await api.createSession(config);
       router.push(`/interview/${session.id}`);
@@ -119,33 +127,23 @@ export function InterviewSetup() {
               ))}
             </select>
           </label>
-          <label className="checkbox">
-            <input
-              type="checkbox"
-              checked={config.monitoring.focus}
-              onChange={(event) =>
-                setConfig({
-                  ...config,
-                  monitoring: { ...config.monitoring, focus: event.target.checked },
-                })
-              }
-            />
-            <span>
-              Observe when this interview tab is hidden. Only event metadata is stored; this does
-              not affect feedback.
-            </span>
-          </label>
+          <MonitoringConsentFields
+            required
+            value={config.monitoring}
+            disabled={pending}
+            onChange={(monitoring) => setConfig({ ...config, monitoring })}
+          />
           {error && (
             <p role="alert" className="error">
               {error}
             </p>
           )}
           <button className="button" disabled={pending}>
-            {pending ? "Preparing your question…" : "Start practice →"}
+            {pending ? "Preparing your session…" : "Continue to device permissions →"}
           </button>
           <p className="small muted">
-            Typed answers work now. Voice, camera detection, and diagram interviews are assigned
-            development tasks.
+            Camera and microphone access are required for saved interviews. Typed answers are
+            available. Voice transcription and diagram interviewing remain separate features.
           </p>
         </form>
         <aside className="stack">
