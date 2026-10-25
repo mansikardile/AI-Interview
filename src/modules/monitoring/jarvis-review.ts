@@ -84,7 +84,7 @@ export async function generateMonitoringReview(
       {
         method: "POST",
         cache: "no-store",
-        signal: AbortSignal.timeout(local ? 120000 : 25000),
+        signal: AbortSignal.timeout(local ? 120000 : 60000),
         headers: {
           ...(local ? {} : { Authorization: `Bearer ${options.apiKey}` }),
           "Content-Type": "application/json",
@@ -93,17 +93,15 @@ export async function generateMonitoringReview(
           model: options.model,
           temperature: 0.2,
           max_tokens: 1600,
-          ...(local
-            ? {
-                response_format: {
-                  type: "json_schema",
-                  json_schema: {
-                    name: "monitoring_review",
-                    schema: z.toJSONSchema(localSchema),
-                  },
-                },
-              }
-            : {}),
+          // Hosted vLLM Gemma 4 otherwise spends the token budget on hidden reasoning.
+          ...(local ? {} : { chat_template_kwargs: { enable_thinking: false } }),
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "monitoring_review",
+              schema: z.toJSONSchema(localSchema),
+            },
+          },
           messages: [
             {
               role: "system",
@@ -116,14 +114,12 @@ export async function generateMonitoringReview(
                 events: evidence,
                 allowedEventIds: evidence.map((event) => event.id),
                 outputTemplate: {
-                  observations: evidence
-                    .slice(-8)
-                    .map((event) => ({
-                      eventIds: [event.id],
-                      explanation: "Replace with a short neutral observation",
-                      alternativeExplanation:
-                        "Replace with an explicitly uncertain benign possibility",
-                    })),
+                  observations: evidence.slice(-8).map((event) => ({
+                    eventIds: [event.id],
+                    explanation: "Replace with a short neutral observation",
+                    alternativeExplanation:
+                      "Replace with an explicitly uncertain benign possibility",
+                  })),
                   practiceTips: ["Replace with an actionable rehearsal tip"],
                 },
               }),

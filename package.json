@@ -5,6 +5,7 @@
   "scripts": {
     "test:integration:smoke": "node --import=tsx scripts/integration-smoke.ts",
     "test:ollama": "node --env-file-if-exists=.env.local --import=tsx scripts/ollama-smoke.ts",
+    "test:jarvis": "node --env-file-if-exists=.env.local --import=tsx scripts/jarvis-smoke.ts",
     "postinstall": "node scripts/prepare-monitoring-assets.mjs",
     "prepare:monitoring": "node scripts/prepare-monitoring-assets.mjs",
     "predev": "npm run prepare:monitoring",

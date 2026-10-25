@@ -20,7 +20,7 @@ Open [localhost:3000](http://localhost:3000). On Windows, use Node.js 24 and `Co
 
 Default startup needs no account, API key or Docker. It uses mock intelligence and temporary memory storage. Saved interviews require explicit camera/microphone consent plus browser permissions, and block questions/submission if either device stops. `/interview/demo` is a device-optional fixture-only room; `/monitoring` is a diagnostic lab.
 
-For real local Gemma 4 testing, set `AI_PROVIDER=ollama`, `OLLAMA_MODEL` to your installed Gemma 4 name and `OLLAMA_BASE_URL=http://127.0.0.1:11434/v1` in gitignored `.env.local`. Start Ollama and run `npm run test:ollama`. This machine has `gemma4:e2b-mlx`. See [Gemma setup](docs/GEMMA-JARVIS.md); JarvisLabs remains the hosted deployment option.
+For real local Gemma 4 testing, set `AI_PROVIDER=ollama`, `OLLAMA_MODEL` to your installed Gemma 4 name and `OLLAMA_BASE_URL=http://127.0.0.1:11434/v1` in gitignored `.env.local`. Start Ollama and run `npm run test:ollama`. This machine has `gemma4:e2b-mlx`. See [Gemma setup](docs/GEMMA-JARVIS.md). For hosted Gemma 4 31B, set `AI_PROVIDER=jarvis` and the `JARVISLABS_*` values, then run `npm run test:jarvis`.
 
 ## Divide the work
 
@@ -53,6 +53,7 @@ Each feature directory contains a spec, implementation plan and checkable tasks.
 | `npm run dev`            | Next.js development server                                                    |
 | `npm run check`          | ESLint, generated route types, TypeScript, contract/service/provider tests    |
 | `npm run test:ai`        | Owner B's provider/prompt-boundary tests                                      |
+| `npm run test:jarvis`    | Live hosted Gemma 4 calls using `JARVISLABS_*` from `.env.local`              |
 | `npm run test:watch`     | Watch unit tests                                                              |
 | `npm run build`          | Production build                                                              |
 | `npm run test:smoke`     | HTTP journey against a running app; `SMOKE_BASE_URL` overrides localhost:3000 |

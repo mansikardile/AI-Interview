@@ -41,6 +41,8 @@ MediaPipe and Silero remain the real-time detectors. Gemma supplies uncertain al
 
 ## Live acceptance
 
+Hosted verification on October 25, 2026: `npm run test:jarvis` passed question generation, exact-quote assessment and evidence-linked monitoring review against the serverless `gemma-4-31b-it` deployment (warm calls 1.5–6 s; the first structured request after idle took ~18 s). `npm run test:smoke` passed against `next start` with `AI_PROVIDER=jarvis`, sessions reported `mode: live`, and the monitoring review route returned `provider: jarvislabs`. Hosted requests disable Gemma's hidden reasoning and request JSON-schema output.
+
 Local verification on October 25, 2026: `npm run test:ollama` passed actual question generation, exact-quote assessment and evidence-linked monitoring review with `gemma4:e2b-mlx`. The schema constrains event IDs to supplied values and the prompt provides an exact-ID template. Invalid output remains an explicit error; no mock fallback or silent evidence repair. Schema validity is not a factual-quality guarantee.
 
 1. Run `npm run check` and `npm run build`, then start the app with the above environment.

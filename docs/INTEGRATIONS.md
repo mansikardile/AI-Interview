@@ -21,7 +21,7 @@ JARVISLABS_MODEL=gemma-4-31b-it
 
 Verify the exact model ID against your account; the example is configurable, not a promise about account availability. The adapter uses the documented OpenAI-compatible Chat Completions shape with standard fetch, server-side only. It sends config and text answers, not camera frames or monitoring events. Live mode does not silently fall back to mock.
 
-The foundation has schema validation, quote grounding, a 25-second timeout, output limits, and explicit provider errors. Live model quality/availability/latency still requires B06. Hosted image support must be verified before diagrams; audio transcription is a separate unimplemented integration.
+The foundation has schema validation, quote grounding, a 60-second timeout, output limits, and explicit provider errors. Hosted requests ask for JSON-schema output and send `chat_template_kwargs.enable_thinking=false`; otherwise vLLM-served Gemma 4 spends most of `max_tokens` on hidden reasoning and can truncate the JSON. Run `npm run test:jarvis` to check live question, assessment and monitoring-review calls. Live model quality/availability/latency still requires B06. Hosted image support must be verified before diagrams; audio transcription is a separate unimplemented integration.
 
 Sources: [JarvisLabs Model APIs](https://jarvislabs.ai/products/models), [Gemma model capabilities](https://ai.google.dev/gemma/docs/core/model_card_4). Verify the actual hackathon's Gemma/API eligibility rules before submitting; using Gemma through one host does not itself prove prize eligibility.
 

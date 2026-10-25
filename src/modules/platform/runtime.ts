@@ -48,6 +48,9 @@ export function getIntelligence(): InterviewIntelligence {
     apiKey: process.env.JARVISLABS_API_KEY,
     baseUrl: process.env.JARVISLABS_BASE_URL ?? "https://models.jarvislabs.net/v1",
     model: process.env.JARVISLABS_MODEL,
+    timeoutMs: 60000,
+    structuredOutput: true,
+    disableThinking: true,
   });
 }
 

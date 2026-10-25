@@ -77,6 +77,32 @@ describe("interview intelligence boundary", () => {
       context.config.jobDescription,
     );
     expect(JSON.parse(request.messages[1].content)).not.toHaveProperty("events");
+    expect(request).not.toHaveProperty("chat_template_kwargs");
+  });
+  it("asks hosted Gemma for schema output without hidden reasoning when configured", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: { content: JSON.stringify({ text: "Design a ledger.", topic: "Ledgers" }) },
+            },
+          ],
+        }),
+      ),
+    );
+    const provider = new JarvisIntelligence({
+      apiKey: "test-only-key",
+      baseUrl: "https://example.invalid/v1",
+      model: "gemma-4-test",
+      fetcher,
+      structuredOutput: true,
+      disableThinking: true,
+    });
+    await provider.initialQuestion(fixtureSession.config);
+    const request = JSON.parse(fetcher.mock.calls[0][1]!.body as string);
+    expect(request.chat_template_kwargs).toEqual({ enable_thinking: false });
+    expect(request.response_format.type).toBe("json_schema");
   });
   it("fails explicitly on malformed JSON, network failures or provider error", async () => {
     for (const response of [

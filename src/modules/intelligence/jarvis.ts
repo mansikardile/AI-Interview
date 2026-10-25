@@ -23,6 +23,8 @@ type JarvisOptions = {
   fetcher?: typeof fetch;
   timeoutMs?: number;
   structuredOutput?: boolean;
+  /** vLLM-hosted Gemma 4 otherwise spends most of max_tokens on hidden reasoning. */
+  disableThinking?: boolean;
 };
 
 /**
@@ -139,6 +141,9 @@ export class JarvisIntelligence implements InterviewIntelligence {
             model: this.options.model,
             temperature: 0.2,
             max_tokens: 1800,
+            ...(this.options.disableThinking
+              ? { chat_template_kwargs: { enable_thinking: false } }
+              : {}),
             ...(this.options.structuredOutput
               ? {
                   response_format: {
